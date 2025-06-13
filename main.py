@@ -1,5 +1,5 @@
 def main():
-    print("Hello from ai-debate-chamber!")
+    print("Hello from ASS - Argumentative System Service!")
 
 
 if __name__ == "__main__":

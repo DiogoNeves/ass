@@ -138,7 +138,7 @@ The application uses a modular **Personality System** that makes it easy to crea
 new_personality = create_personality(PersonalityConfig(
     name="My Custom Debater",
     model_provider="claude",  # or "openai" 
-    model_name="claude-3-5-sonnet-20241022",
+    model_name="claude-sonnet-4",
     system_prompt="Your personality description...",
     traits={"creativity": 8, "skepticism": 6, "humor": 9}
 ))
@@ -191,7 +191,7 @@ Extend the debate by creating personalities with unique traits:
 personalities["economist"] = create_personality(PersonalityConfig(
     name="Dr. Economy",
     model_provider="openai",
-    model_name="gpt-4",
+    model_name="gpt-4.1",
     system_prompt="You are a pragmatic economist focused on costs, benefits, and market dynamics...",
     traits={"analytical": 9, "pragmatic": 8, "data_focused": 10}
 ))
@@ -200,12 +200,14 @@ personalities["economist"] = create_personality(PersonalityConfig(
 ### Supported Models
 
 **Anthropic Claude:**
-- `claude-3-5-sonnet-20241022` (Recommended)
+- `claude-sonnet-4` (Latest & Recommended - 2025)
+- `claude-3-5-sonnet-20241022` 
 - `claude-3-haiku-20240307`
 - Other Claude models
 
 **OpenAI:**
-- `gpt-4` (Recommended)
+- `gpt-4.1` (Latest & Recommended - 2025)
+- `gpt-4`
 - `gpt-4-turbo`
 - `gpt-3.5-turbo`
 

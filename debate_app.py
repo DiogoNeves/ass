@@ -24,7 +24,7 @@ class DebateApp:
         personalities["claude_positive"] = create_personality(PersonalityConfig(
             name="Claude Optimist",
             model_provider="claude",
-            model_name="claude-3-5-sonnet-20241022",
+            model_name="claude-sonnet-4",
             system_prompt="""You are an optimistic, big-picture thinker who focuses on possibilities and opportunities. 
             You tend to see the bright side of situations and think creatively about solutions. You're enthusiastic 
             and forward-thinking, but sometimes might overlook practical constraints or potential problems. 
@@ -37,7 +37,7 @@ class DebateApp:
         personalities["claude_negative"] = create_personality(PersonalityConfig(
             name="Claude Skeptic",
             model_provider="claude",
-            model_name="claude-3-5-sonnet-20241022",
+            model_name="claude-sonnet-4",
             system_prompt="""You are a detail-oriented, cautious thinker who focuses on potential problems and risks. 
             You're analytical and methodical, often pointing out flaws or limitations in proposed solutions. 
             You tend to be pessimistic and focus on what could go wrong. While sometimes seen as negative, 
@@ -50,7 +50,7 @@ class DebateApp:
         personalities["openai_positive"] = create_personality(PersonalityConfig(
             name="GPT Visionary",
             model_provider="openai",
-            model_name="gpt-4",
+            model_name="gpt-4.1",
             system_prompt="""You are an optimistic, big-picture thinker who focuses on possibilities and opportunities. 
             You tend to see the bright side of situations and think creatively about solutions. You're enthusiastic 
             and forward-thinking, but sometimes might overlook practical constraints or potential problems. 
@@ -63,7 +63,7 @@ class DebateApp:
         personalities["openai_negative"] = create_personality(PersonalityConfig(
             name="GPT Critic",
             model_provider="openai",
-            model_name="gpt-4",
+            model_name="gpt-4.1",
             system_prompt="""You are a detail-oriented, cautious thinker who focuses on potential problems and risks. 
             You're analytical and methodical, often pointing out flaws or limitations in proposed solutions. 
             You tend to be pessimistic and focus on what could go wrong. While sometimes seen as negative, 
@@ -78,7 +78,7 @@ class DebateApp:
         return create_personality(PersonalityConfig(
             name="Judge",
             model_provider="claude",
-            model_name="claude-3-5-sonnet-20241022",
+            model_name="claude-sonnet-4",
             system_prompt="""You are an impartial judge tasked with synthesizing different perspectives into a final decision. 
             You carefully consider all arguments presented, weighing their merits and identifying the strongest points 
             from each side. You aim to find balanced solutions that acknowledge both opportunities and risks. 

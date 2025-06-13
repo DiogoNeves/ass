@@ -1,7 +1,7 @@
 [project]
-name = "ai-debate-chamber"
+name = "ass"
 version = "0.1.0"
-description = "Add your description here"
+description = "ASS - Argumentative System Service: Watch AI personalities debate any topic"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
