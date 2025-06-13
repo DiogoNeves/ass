@@ -1,0 +1,284 @@
+# 🏛️ ASS - Argumentative System Service
+
+<div align="center">
+
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![UV](https://img.shields.io/badge/uv-package%20manager-green.svg)](https://docs.astral.sh/uv/)
+[![Rich](https://img.shields.io/badge/cli-rich-purple.svg)](https://rich.readthedocs.io/)
+
+*Where AI personalities get into heated arguments about everything*
+
+</div>
+
+## 🎭 What is ASS?
+
+**ASS (Argumentative System Service)** is a command-line application that orchestrates structured debates between four distinct AI personalities. Each personality has unique traits, perspectives, and argumentation styles, creating dynamic and insightful discussions on any topic you propose.
+
+**Perfect for:**
+- 🧠 **Exploring complex topics** from multiple perspectives
+- 📚 **Educational discussions** and critical thinking exercises  
+- 🤔 **Decision-making** by weighing different viewpoints
+- 🎪 **Entertainment** - watch AIs argue about anything!
+- 🔬 **Research** into AI personality modeling and multi-agent systems
+
+## 🎭 Meet the Debaters
+
+| Personality | Provider | Traits | Perspective |
+|-------------|----------|--------|-------------|
+| **🌟 Claude Optimist** | Claude | Creative, big-picture, opportunity-focused | Sees possibilities everywhere |
+| **🔍 Claude Skeptic** | Claude | Analytical, detail-oriented, risk-aware | Points out flaws and limitations |
+| **🚀 GPT Visionary** | OpenAI | Forward-thinking, innovative, solution-oriented | Champions breakthrough ideas |
+| **⚖️ GPT Critic** | OpenAI | Methodical, cautious, problem-focused | Highlights potential issues |
+
+After three rounds of heated debate, an **impartial Judge** synthesizes all arguments into a balanced final decision.
+
+## 🎬 Example Debates
+
+### 🤖 "Should we develop AGI as fast as possible?"
+
+<details>
+<summary>Click to see the debate highlights</summary>
+
+**Claude Optimist:** *"The potential benefits are extraordinary! AGI could solve climate change, cure diseases, and unlock technologies we can't even imagine. The faster we develop it responsibly, the sooner we can address humanity's greatest challenges!"*
+
+**GPT Critic:** *"This rush toward AGI poses existential risks we don't fully understand. Without proper safety frameworks and international oversight, we could create systems that operate beyond human control or comprehension."*
+
+**GPT Visionary:** *"What if we're thinking too small? AGI represents the next evolutionary leap for intelligence itself. With proper safeguards, we could create benevolent systems that enhance human potential rather than replace it."*
+
+**Claude Skeptic:** *"The alignment problem remains unsolved. How can we ensure AGI systems will pursue human values when we haven't even agreed on what those values are? The technical challenges of safe AGI are being dangerously underestimated."*
+
+**Judge's Decision:** *"A measured approach prioritizing safety research alongside capability development, with mandatory international cooperation frameworks..."*
+
+</details>
+
+### 🍕 "Is pineapple on pizza acceptable?"
+
+<details>
+<summary>Click to see this heated culinary debate</summary>
+
+**Claude Optimist:** *"Pineapple on pizza represents culinary creativity at its finest! The sweet-savory combination creates delightful flavor contrasts, and food should be about joy and experimentation, not rigid rules!"*
+
+**GPT Critic:** *"This combination violates fundamental principles of Italian cuisine. The high water content of pineapple creates soggy crusts, while the sweetness overwhelms the carefully balanced acidity of traditional tomato sauce."*
+
+**GPT Visionary:** *"Hawaiian pizza opened the door to global fusion cuisine! Without this bold experiment, we might never have discovered other amazing combinations like BBQ chicken or breakfast pizzas."*
+
+**Claude Skeptic:** *"Traditional pizza recipes evolved over centuries for good reasons. Adding random fruits doesn't constitute innovation—it's culinary chaos that diminishes the integrity of a perfect food."*
+
+**Judge's Decision:** *"While respecting traditional Italian cuisine, food evolution through cultural fusion has created legitimate new traditions. Pineapple pizza, though controversial, represents valid culinary diversity..."*
+
+</details>
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Python 3.9+**
+- **UV package manager** ([install here](https://docs.astral.sh/uv/getting-started/installation/))
+- **API Keys:**
+  - OpenAI API key
+  - Anthropic Claude API key
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/DiogoNeves/ass.git
+   cd ass
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   uv sync
+   ```
+
+3. **Set up your API keys:**
+   Create a `.env` file:
+   ```env
+   CLAUDE_API_KEY=your_claude_api_key_here
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+### Running Debates
+
+**Interactive Mode** - Ask any question:
+```bash
+uv run python debate_app.py
+```
+
+**Demo Mode** - See a pre-configured debate:
+```bash
+uv run python demo.py
+```
+
+## 🎮 How It Works
+
+```mermaid
+graph TD
+    A[Your Question] --> B[Round 1: Opening Arguments]
+    B --> C[Round 2: Rebuttals & Counter-arguments]
+    C --> D[Round 3: Final Positions]
+    D --> E[Judge's Final Decision]
+    
+    style A fill:#e1f5fe
+    style E fill:#f3e5f5
+```
+
+1. **🎯 Question Input** - You provide any question or topic
+2. **🥊 Three Rounds of Debate** - Each personality argues their position
+3. **🔄 Context Building** - Each round builds on previous arguments
+4. **⚖️ Final Judgment** - An impartial judge synthesizes all viewpoints
+
+## 🛠️ Architecture
+
+The application uses a modular **Personality System** that makes it easy to create new AI debaters:
+
+```python
+# Create a new personality
+new_personality = create_personality(PersonalityConfig(
+    name="My Custom Debater",
+    model_provider="claude",  # or "openai" 
+    model_name="claude-3-5-sonnet-20241022",
+    system_prompt="Your personality description...",
+    traits={"creativity": 8, "skepticism": 6, "humor": 9}
+))
+```
+
+**Key Components:**
+- `PersonalityConfig` - Define model, prompts, and personality traits
+- `LLMPersonality` - Abstract base class for all personalities  
+- `create_personality()` - Factory function for easy personality creation
+- Rich CLI interface with beautiful formatting and animations
+
+## 💡 Interesting Questions to Try
+
+### 🧠 **Philosophy & Ethics**
+- "Is free will an illusion?"
+- "Should we prioritize individual freedom or collective security?"
+- "Is artificial consciousness possible?"
+
+### 🌍 **Society & Technology**  
+- "Should social media be regulated like tobacco?"
+- "Is remote work better for society than office work?"
+- "Should we colonize Mars or fix Earth first?"
+
+### 🎨 **Creative & Fun**
+- "Which is the superior breakfast: cereal or toast?"
+- "Should we bring back extinct species through genetic engineering?"
+- "Is a hot dog a sandwich?"
+
+### 🏛️ **Policy & Governance**
+- "Should voting be mandatory in democracies?"
+- "Is universal basic income feasible?"
+- "Should we abolish daylight saving time?"
+
+## 🎨 Features
+
+- **🎭 Rich CLI Interface** - Colored panels, animations, and beautiful formatting
+- **🔄 Turn-based Debates** - Structured rounds with context accumulation
+- **🤖 Multi-Model Support** - Leverages both Claude and OpenAI APIs
+- **🔧 Extensible Design** - Easy to add new personalities and traits
+- **⚡ Real-time Feedback** - Progress indicators and thinking animations
+- **📝 Context Awareness** - Each debater builds on previous arguments
+
+## 🔧 Customization
+
+### Adding New Personalities
+
+Extend the debate by creating personalities with unique traits:
+
+```python
+personalities["economist"] = create_personality(PersonalityConfig(
+    name="Dr. Economy",
+    model_provider="openai",
+    model_name="gpt-4",
+    system_prompt="You are a pragmatic economist focused on costs, benefits, and market dynamics...",
+    traits={"analytical": 9, "pragmatic": 8, "data_focused": 10}
+))
+```
+
+### Supported Models
+
+**Anthropic Claude:**
+- `claude-3-5-sonnet-20241022` (Recommended)
+- `claude-3-haiku-20240307`
+- Other Claude models
+
+**OpenAI:**
+- `gpt-4` (Recommended)
+- `gpt-4-turbo`
+- `gpt-3.5-turbo`
+
+## 📁 Project Structure
+
+```
+ass/
+├── 📄 README.md           # This file
+├── ⚙️ pyproject.toml      # UV project configuration  
+├── 🔒 uv.lock            # Dependency lock file
+├── 🔐 .env               # API keys (create this)
+├── 📁 .venv/             # Virtual environment (auto-created)
+├── 🧠 personality.py      # Personality system and API integrations
+├── 🎭 debate_app.py       # Main interactive application
+└── 🎬 demo.py            # Demo runner with sample debate
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Here are some ideas:
+
+- **🎭 New Personality Types** - Add specialists (scientist, artist, philosopher)
+- **🔌 Additional LLM Providers** - Support for more AI models
+- **🎪 Enhanced Debate Formats** - Tournament brackets, team debates
+- **🎨 UI Improvements** - Better visualizations and formatting
+- **📊 Analytics** - Argument analysis and debate statistics
+
+### Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/DiogoNeves/ass.git
+cd ass
+uv sync
+
+# Run tests (if you add them)
+uv run pytest
+
+# Format code
+uv run black .
+```
+
+## 🛠️ Troubleshooting
+
+**🔑 API Key Issues:**
+- Ensure your `.env` file is in the project root
+- Verify API keys are valid and have sufficient credits
+- Check that keys don't have extra spaces or quotes
+
+**📦 Import Errors:**
+- Run `uv sync` to install all dependencies
+- Ensure you're using Python 3.9+
+- Use `uv run python script.py` instead of `python script.py`
+
+**🌐 UV Issues:**
+- Install UV: [Installation Guide](https://docs.astral.sh/uv/getting-started/installation/)
+- Update UV: `uv self update`
+
+## 📜 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **[Rich](https://rich.readthedocs.io/)** - Beautiful terminal formatting
+- **[OpenAI](https://openai.com/)** - GPT models and API
+- **[Anthropic](https://anthropic.com/)** - Claude models and API
+- **[UV](https://docs.astral.sh/uv/)** - Fast Python package manager
+
+---
+
+<div align="center">
+
+**🎭 Ready to watch AIs debate? Start a discussion and see what happens! 🎭**
+
+[⭐ Star this repo](https://github.com/DiogoNeves/ass) • [🐛 Report Bug](https://github.com/DiogoNeves/ass/issues) • [💡 Request Feature](https://github.com/DiogoNeves/ass/issues)
+
+</div>
