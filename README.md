@@ -1,4 +1,4 @@
-# 🏛️ ASS - Argumentative System Service
+# 🍑 ASS - Argumentative System Service
 
 <div align="center">
 
