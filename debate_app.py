@@ -3,7 +3,6 @@ import os
 from typing import Dict, List, Tuple, Optional
 from rich.console import Console
 from rich.panel import Panel
-from rich.layout import Layout
 from rich.text import Text
 from rich.prompt import Prompt
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -11,6 +10,7 @@ from rich.columns import Columns
 from personality import PersonalityConfig, create_personality, LLMPersonality
 
 console = Console()
+
 
 class DebateApp:
     """Main application class for running AI-powered debates.
@@ -306,65 +306,67 @@ class DebateApp:
             question: The debate topic/question
         """
         console.print(f"\n[bold magenta]🎯 DEBATE TOPIC:[/bold magenta] {question}\n")
-        
+
         debate_context = ""
         debate_order = self._get_debate_order()
         
         for round_num in range(1, 4):  # 3 rounds max
             console.print(f"[bold white]═══ ROUND {round_num} ═══[/bold white]\n")
-            
+
             for personality_key in debate_order:
                 personality = self.personalities[personality_key]
-                
+
                 # Show thinking animation
                 with Progress(
                     SpinnerColumn(),
                     TextColumn(f"[bold]{personality.config.name} is thinking..."),
                     transient=True,
-                    console=console
+                    console=console,
                 ) as progress:
                     task = progress.add_task("thinking", total=None)
                     time.sleep(1)
-                    
+
                     response = personality.generate_response(question, debate_context)
-                
+
                 # Display response in styled panel
                 style_map = {   
                     "claude_positive": "green",
-                    "claude_negative": "red", 
+                    "claude_negative": "red",
                     "openai_positive": "blue",
                     "openai_negative": "yellow",
                     "gemini_positive": "cyan",
                     "gemini_negative": "magenta",
                     "gemini_balanced": "white"
                 }
-                
-                console.print(Panel(
-                    response,
-                    title=f"💭 {personality.config.name}",
-                    style=style_map[personality_key],
-                    padding=(1, 2)
-                ))
+
+                console.print(
+                    Panel(
+                        response,
+                        title=f"💭 {personality.config.name}",
+                        style=style_map[personality_key],
+                        padding=(1, 2),
+                    )
+                )
                 console.print()
-                
+
                 # Add to context for next participants
                 debate_context += f"\n{personality.config.name}: {response}\n"
-        
+
         # Judge's final decision
         console.print("[bold white]═══ FINAL JUDGMENT ═══[/bold white]\n")
-        
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[bold]The Judge is deliberating..."),
             transient=True,
-            console=console
+            console=console,
         ) as progress:
             task = progress.add_task("judging", total=None)
             time.sleep(2)
-            
+
             final_decision = self.judge.generate_response(
-                question, 
-                f"Here are the arguments from the debate:\n{debate_context}\n\nPlease provide your final judgment."
+                question,
+                f"Here are the arguments from the debate:\n{debate_context}\n\nPlease provide your final judgment.",
             )
         
         console.print(Panel(
@@ -389,13 +391,14 @@ class DebateApp:
         judge_provider = self._select_judge()
         self.judge = self._create_judge(judge_provider)
         self.run_debate(question)
-        
+
         console.print("\n[bold green]Thank you for using ASS![/bold green]")
 
-def main() -> None:
-    """Entry point for the application."""
+
+def main():
     app = DebateApp()
     app.run()
+
 
 if __name__ == "__main__":
     main()
