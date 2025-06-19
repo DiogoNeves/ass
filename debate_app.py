@@ -24,6 +24,7 @@ class DebateApp:
         self.personalities = self._create_personalities()
         self.judge = self._create_judge()
         self.voting_system = None
+        self.demo_mode = False  # Flag for demo mode
         if self.config.voting_enabled:
             voting_config = VotingConfig(
                 point_threshold=self.config.consensus_threshold,
@@ -373,8 +374,12 @@ Provide a clear, well-reasoned final judgment.""",
             
             # Add a pause between iterations
             if not consensus_reached and iteration < self.config.max_iterations:
-                console.print("\n[dim]Press Enter to continue to next iteration...[/dim]")
-                input()
+                if self.demo_mode:
+                    console.print("\n[dim]Proceeding to next iteration...[/dim]")
+                    time.sleep(2)  # Brief pause in demo mode
+                else:
+                    console.print("\n[dim]Press Enter to continue to next iteration...[/dim]")
+                    input()
         
         # Judge's final decision
         self._render_judge_decision_with_voting(question, debate_history, final_votes)

@@ -42,8 +42,16 @@ def main():
         # Classic mode - use original demo question
         question = "Should we invest more in renewable energy or nuclear power?"
     
+    # Set demo mode flag to skip user input
+    app.demo_mode = True
+    
     app.display_header()
     print(f"\n[Demo Mode] Automatically debating: {question}\n")
+    
+    if config.voting_enabled and not config.classic_mode:
+        print("[yellow]Note: In interactive mode, you would press Enter between iterations.[/yellow]")
+        print("[yellow]This demo will automatically proceed through iterations.[/yellow]\n")
+    
     app.run_debate(question)
     
     print("\n[Demo Complete]")
