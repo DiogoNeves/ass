@@ -481,7 +481,7 @@ Provide a clear, well-reasoned final judgment.""",
                     voting_summary += f"{participant}: {score} points ({percentage:.1f}%)\n"
                 
                 if summary.get("consensus_reached"):
-                    voting_summary += f"\nConsensus winner: {summary.get('winner', 'Unknown')}""
+                    voting_summary += f"\nConsensus winner: {summary.get('winner', 'Unknown')}"
         
         judge_prompt = f"""Review this entire debate and provide your final judgment.
 
