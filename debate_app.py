@@ -192,7 +192,14 @@ Provide a clear, well-reasoned final judgment.""",
         if not self.voting_system:
             return
             
-        summary = self.voting_system.get_vote_summary(iteration)
+        # Get the correct voting round index (voting starts after min_iterations)
+        voting_round = len(self.voting_system.vote_history) - 1
+        summary = self.voting_system.get_vote_summary(voting_round)
+        
+        # Handle empty summary
+        if not summary:
+            console.print("[red]Error: Unable to get voting summary[/red]")
+            return
         
         # Create voting table
         table = Table(title=f"Voting Results - Iteration {iteration + 1}")
@@ -208,18 +215,20 @@ Provide a clear, well-reasoned final judgment.""",
         
         # Show individual votes
         console.print("\n[bold]Individual Rankings:[/bold]")
-        for vote_info in summary["individual_votes"]:
-            console.print(f"\n{vote_info['voter']}:")
-            rankings_text = " → ".join(vote_info['rankings'])
-            console.print(f"  {rankings_text}")
-            if vote_info['reasoning']:
+        for vote_info in summary.get("individual_votes", []):
+            console.print(f"\n{vote_info.get('voter', 'Unknown')}:")
+            rankings = vote_info.get('rankings', [])
+            if rankings:
+                rankings_text = " → ".join(rankings)
+                console.print(f"  {rankings_text}")
+            if vote_info.get('reasoning'):
                 console.print(f"  [italic]{vote_info['reasoning']}[/italic]")
         
         # Show consensus status
-        if summary["consensus_reached"]:
-            console.print(f"\n[bold green]✓ CONSENSUS REACHED! Winner: {summary['winner']}[/bold green]")
+        if summary.get("consensus_reached", False):
+            console.print(f"\n[bold green]✓ CONSENSUS REACHED! Winner: {summary.get('winner', 'Unknown')}[/bold green]")
         else:
-            needed = summary["threshold_score"]
+            needed = summary.get("threshold_score", 0)
             console.print(f"\n[yellow]No consensus yet. Need {needed:.0f} points ({self.config.consensus_threshold * 100:.0f}% of max)[/yellow]")
 
     def collect_votes(self, personalities: Dict[str, LLMPersonality], debate_history: List[Dict[str, str]], iteration: int) -> List[Vote]:
@@ -463,15 +472,16 @@ Provide a clear, well-reasoned final judgment.""",
         debate_context = self.format_debate_history(debate_history)
         
         voting_summary = ""
-        if final_votes and self.voting_system:
+        if final_votes and self.voting_system and len(self.voting_system.vote_history) > 0:
             summary = self.voting_system.get_vote_summary(len(self.voting_system.vote_history) - 1)
-            voting_summary = f"\n\nFINAL VOTING RESULTS:\n"
-            for participant, score in summary["sorted_rankings"]:
-                percentage = (score / self.voting_system.max_possible_points) * 100
-                voting_summary += f"{participant}: {score} points ({percentage:.1f}%)\n"
-            
-            if summary["consensus_reached"]:
-                voting_summary += f"\nConsensus winner: {summary['winner']}"
+            if summary and "sorted_rankings" in summary:
+                voting_summary = f"\n\nFINAL VOTING RESULTS:\n"
+                for participant, score in summary["sorted_rankings"]:
+                    percentage = (score / self.voting_system.max_possible_points) * 100
+                    voting_summary += f"{participant}: {score} points ({percentage:.1f}%)\n"
+                
+                if summary.get("consensus_reached"):
+                    voting_summary += f"\nConsensus winner: {summary.get('winner', 'Unknown')}""
         
         judge_prompt = f"""Review this entire debate and provide your final judgment.
 
