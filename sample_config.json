@@ -1,0 +1,21 @@
+{
+  "voting_enabled": true,
+  "consensus_threshold": 0.75,
+  "min_iterations": 2,
+  "max_iterations": 10,
+  "scoring_system": {
+    "1": 4,
+    "2": 3,
+    "3": 2,
+    "4": 1
+  },
+  "judge_can_override": true,
+  "override_threshold": 0.9,
+  "allow_local_models": true,
+  "local_model_timeout": 30,
+  "classic_mode": false,
+  "default_voting_traits": {
+    "fairness": 7,
+    "self_confidence": 5
+  }
+}

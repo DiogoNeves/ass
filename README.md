@@ -113,6 +113,31 @@ uv run python demo.py
 
 ## 🎮 How It Works
 
+### 🗳️ Voting Mode (Default)
+
+```mermaid
+graph TD
+    A[Your Question] --> B[Iteration 0: Initial Positions]
+    B --> C[Iteration 1+: Direct Argumentation]
+    C --> D{Voting Phase}
+    D -->|No Consensus| C
+    D -->|Consensus Reached| E[Judge Reviews Everything]
+    E --> F[Final Decision]
+    
+    style A fill:#e1f5fe
+    style D fill:#fff3cd
+    style F fill:#f3e5f5
+```
+
+1. **🎯 Question Input** - You provide any question or topic
+2. **💭 Initial Positions** - Each personality presents their stance without arguing
+3. **🥊 Argumentation** - Personalities directly engage with each other's points
+4. **🗳️ Voting** - After each iteration, personalities rank all participants
+5. **🔄 Consensus Check** - Continue until voting threshold is reached
+6. **⚖️ Judge Review** - Final synthesis with potential override
+
+### 🎭 Classic Mode
+
 ```mermaid
 graph TD
     A[Your Question] --> B[Round 1: Opening Arguments]
@@ -124,10 +149,7 @@ graph TD
     style E fill:#f3e5f5
 ```
 
-1. **🎯 Question Input** - You provide any question or topic
-2. **🥊 Three Rounds of Debate** - Each personality argues their position
-3. **🔄 Context Building** - Each round builds on previous arguments
-4. **⚖️ Final Judgment** - An impartial judge synthesizes all viewpoints
+Use `--classic-mode` to run the original 3-round format.
 
 ## 🛠️ Architecture
 
@@ -174,12 +196,18 @@ new_personality = create_personality(PersonalityConfig(
 
 ## 🎨 Features
 
+- **🗳️ Consensus-Based Voting** - Personalities vote and debate until reaching agreement
 - **🎭 Rich CLI Interface** - Colored panels, animations, and beautiful formatting
-- **🔄 Turn-based Debates** - Structured rounds with context accumulation
-- **🤖 Multi-Model Support** - Leverages both Claude and OpenAI APIs
-- **🔧 Extensible Design** - Easy to add new personalities and traits
+- **🔄 Dynamic Iterations** - Debates continue until consensus or max iterations
+- **💬 Direct Argumentation** - Personalities must engage with each other's points
+- **🤖 Multi-Model Support** - Claude, OpenAI, and local model servers
+- **📊 Ranked Choice Voting** - Sophisticated scoring system with configurable thresholds
+- **⚖️ Judge Override** - Impartial review with detailed reasoning
+- **🔧 Highly Configurable** - JSON config files, environment variables, CLI flags
+- **🌐 Local Model Support** - Connect to any OpenAI-compatible API
 - **⚡ Real-time Feedback** - Progress indicators and thinking animations
 - **📝 Context Awareness** - Each debater builds on previous arguments
+- **🎯 Personality Traits** - Voting fairness and self-confidence attributes
 
 ## 🔧 Customization
 
@@ -211,6 +239,74 @@ personalities["economist"] = create_personality(PersonalityConfig(
 - `gpt-4-turbo`
 - `gpt-3.5-turbo`
 
+**Local Models:**
+- Any OpenAI-compatible API endpoint
+- Configure with `--local-model-url` or `LOCAL_MODEL_URL` environment variable
+
+### Configuration Options
+
+#### Command Line Arguments
+
+```bash
+# Voting mode options
+uv run python debate_app.py --voting-threshold 0.8  # Set consensus to 80%
+uv run python debate_app.py --max-iterations 15     # Allow up to 15 rounds
+uv run python debate_app.py --min-iterations 3      # Require 3 rounds before voting
+
+# Classic mode
+uv run python debate_app.py --classic-mode           # Use original 3-round format
+uv run python debate_app.py --no-voting             # Disable voting system
+
+# Local model support
+uv run python debate_app.py --local-model-url http://localhost:8080
+
+# Configuration file
+uv run python debate_app.py --config my_config.json
+```
+
+#### Environment Variables
+
+```bash
+# Voting configuration
+export DEBATE_VOTING_ENABLED=true
+export DEBATE_CONSENSUS_THRESHOLD=0.75
+export DEBATE_MAX_ITERATIONS=10
+export DEBATE_CLASSIC_MODE=false
+
+# Local model configuration
+export LOCAL_MODEL_URL=http://localhost:8080
+export LOCAL_MODEL_AUTH=your-auth-token
+export LOCAL_MODEL_TIMEOUT=30
+
+# API Keys (existing)
+export CLAUDE_API_KEY=your_claude_key
+export OPENAI_API_KEY=your_openai_key
+```
+
+#### Configuration File
+
+Create a JSON configuration file (see `sample_config.json`):
+
+```json
+{
+  "voting_enabled": true,
+  "consensus_threshold": 0.75,
+  "min_iterations": 2,
+  "max_iterations": 10,
+  "scoring_system": {
+    "1": 4,
+    "2": 3,
+    "3": 2,
+    "4": 1
+  },
+  "judge_can_override": true,
+  "override_threshold": 0.9,
+  "allow_local_models": true,
+  "local_model_timeout": 30,
+  "classic_mode": false
+}
+```
+
 ## 📁 Project Structure
 
 ```
@@ -221,8 +317,12 @@ ass/
 ├── 🔐 .env               # API keys (create this)
 ├── 📁 .venv/             # Virtual environment (auto-created)
 ├── 🧠 personality.py      # Personality system and API integrations
+├── 🗳️ voting.py          # Voting system and consensus logic
+├── ⚙️ config.py          # Configuration management
 ├── 🎭 debate_app.py       # Main interactive application
-└── 🎬 demo.py            # Demo runner with sample debate
+├── 🎬 demo.py            # Demo runner with sample debates
+├── 📋 sample_config.json  # Example configuration file
+└── 📄 VOTING-FEATURE.md   # Voting feature requirements
 ```
 
 ## 🤝 Contributing
@@ -230,10 +330,14 @@ ass/
 We welcome contributions! Here are some ideas:
 
 - **🎭 New Personality Types** - Add specialists (scientist, artist, philosopher)
-- **🔌 Additional LLM Providers** - Support for more AI models
-- **🎪 Enhanced Debate Formats** - Tournament brackets, team debates
-- **🎨 UI Improvements** - Better visualizations and formatting
-- **📊 Analytics** - Argument analysis and debate statistics
+- **🔌 Additional LLM Providers** - Support for more AI models (Gemini, Mistral, etc.)
+- **🎪 Enhanced Debate Formats** - Tournament brackets, team debates, panel discussions
+- **🗳️ Alternative Voting Systems** - Approval voting, Condorcet method, etc.
+- **🎨 UI Improvements** - Better visualizations, vote graphs, debate trees
+- **📊 Analytics** - Argument quality metrics, consensus patterns, debate statistics
+- **🌐 Web Interface** - Browser-based version with real-time updates
+- **💾 Debate History** - Save and replay interesting debates
+- **🔍 Argument Mining** - Extract key points and conclusions automatically
 
 ### Development Setup
 
