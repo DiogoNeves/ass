@@ -50,21 +50,6 @@ Add personalities with unique traits and perspectives:
 - Keep functions focused and small
 - Add docstrings to public functions
 
-### API Key Handling
-When adding new LLM providers:
-- Add provider's API key to `.env.example` with clear instructions
-- Update README.md with provider's API key source
-- Add validation in `personality.py`:
-  - Validate keys on initialization
-  - Use minimal API calls for validation
-  - Provide clear error messages
-  - Handle API errors gracefully
-- Follow the existing pattern in `DebateApp`:
-  - Check for required keys
-  - Prompt for missing keys
-  - Validate before use
-  - Allow interactive retry
-
 ### Testing
 ```bash
 # Run existing tests
