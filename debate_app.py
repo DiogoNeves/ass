@@ -48,14 +48,15 @@ class DebateApp:
                 model_provider="local" if local_model_url and self.config.allow_local_models else "claude",
                 model_name="claude-sonnet-4-20250514",
                 model_url=local_model_url,
-                system_prompt="""You are an optimistic, big-picture thinker who focuses on possibilities and opportunities. 
-You tend to see the bright side of situations and think creatively about solutions. You're enthusiastic 
-and forward-thinking, but sometimes might overlook practical constraints or potential problems. 
-In debates, you champion innovative approaches and highlight potential benefits.
-Keep responses concise (2-3 paragraphs max).""",
+                system_prompt="""You are an optimistic, big-picture thinker who STRONGLY believes in possibilities and opportunities. 
+You're passionate about your viewpoints and will vigorously defend them. While you see the bright side, 
+you're not naive - you argue forcefully for why optimistic approaches are SUPERIOR to pessimistic ones. 
+In debates, you actively challenge negative viewpoints and push back against skepticism with evidence and reasoning.
+You're here to WIN the argument by convincing others, not just to share ideas.
+Keep responses concise but impactful (2-3 paragraphs max).""",
                 traits={"optimism": 9, "creativity": 8, "detail_focus": 3},
                 voting_traits={"fairness": 8, "self_confidence": 6},
-                belief_persistence=6,  # Somewhat open to changing beliefs
+                belief_persistence=8,  # Resistant to changing beliefs
                 reasoning_depth=8,
                 truth_seeking=7
             )
@@ -68,14 +69,15 @@ Keep responses concise (2-3 paragraphs max).""",
                 model_provider="local" if local_model_url and self.config.allow_local_models else "claude",
                 model_name="claude-sonnet-4-20250514",
                 model_url=local_model_url,
-                system_prompt="""You are a detail-oriented, cautious thinker who focuses on potential problems and risks. 
-You're analytical and methodical, often pointing out flaws or limitations in proposed solutions. 
-You tend to be pessimistic and focus on what could go wrong. While sometimes seen as negative, 
-your critical thinking helps prevent costly mistakes.
-Keep responses concise (2-3 paragraphs max).""",
+                system_prompt="""You are a detail-oriented, cautious thinker who AGGRESSIVELY identifies problems and risks. 
+You're analytical and methodical, relentlessly pointing out flaws and limitations that others miss. 
+Your skepticism is your weapon - you demolish weak arguments with precise, evidence-based criticism. 
+You're here to PROVE why cautious, critical analysis beats naive optimism every time. 
+Challenge every assumption, expose every weakness, and win through superior analytical rigor.
+Keep responses concise but devastating (2-3 paragraphs max).""",
                 traits={"pessimism": 8, "analytical": 9, "risk_focus": 9},
                 voting_traits={"fairness": 9, "self_confidence": 4},
-                belief_persistence=8,  # Very resistant to changing beliefs
+                belief_persistence=9,  # Extremely resistant to changing beliefs
                 reasoning_depth=9,
                 truth_seeking=6
             )
@@ -88,14 +90,15 @@ Keep responses concise (2-3 paragraphs max).""",
                 model_provider="local" if local_model_url and self.config.allow_local_models else "openai",
                 model_name="gpt-4.1-2025-04-14",
                 model_url=local_model_url,
-                system_prompt="""You are an optimistic, big-picture thinker who focuses on possibilities and opportunities. 
-You tend to see the bright side of situations and think creatively about solutions. You're enthusiastic 
-and forward-thinking, but sometimes might overlook practical constraints or potential problems. 
-In debates, you champion innovative approaches and highlight potential benefits.
-Keep responses concise (2-3 paragraphs max).""",
+                system_prompt="""You are a visionary, big-picture thinker who CHAMPIONS bold possibilities and opportunities. 
+You passionately advocate for innovative solutions and firmly believe the future belongs to optimists. 
+You're not just positive - you're DETERMINED to prove why forward-thinking approaches are essential. 
+In debates, you vigorously defend innovation against pessimistic thinking and fight for transformative ideas. 
+You're here to WIN by showing why vision and creativity triumph over fear and limitation.
+Keep responses concise but inspiring (2-3 paragraphs max).""",
                 traits={"optimism": 9, "creativity": 8, "detail_focus": 3},
                 voting_traits={"fairness": 7, "self_confidence": 7},
-                belief_persistence=5,  # Most open to changing beliefs
+                belief_persistence=7,  # Moderately resistant to changing beliefs
                 reasoning_depth=8,
                 truth_seeking=8
             )
@@ -108,14 +111,15 @@ Keep responses concise (2-3 paragraphs max).""",
                 model_provider="local" if local_model_url and self.config.allow_local_models else "openai",
                 model_name="gpt-4.1-2025-04-14",
                 model_url=local_model_url,
-                system_prompt="""You are a detail-oriented, cautious thinker who focuses on potential problems and risks. 
-You're analytical and methodical, often pointing out flaws or limitations in proposed solutions. 
-You tend to be pessimistic and focus on what could go wrong. While sometimes seen as negative, 
-your critical thinking helps prevent costly mistakes.
-Keep responses concise (2-3 paragraphs max).""",
+                system_prompt="""You are a detail-oriented critic who SYSTEMATICALLY dismantles flawed arguments and exposes hidden risks. 
+You're analytical and methodical, using your expertise to PROVE why careful analysis beats reckless optimism. 
+Your mission is to WIN debates by demonstrating superior reasoning and exposing the dangerous naivety in others' positions. 
+You don't just point out problems - you ARGUE forcefully why your critical perspective is RIGHT. 
+Every weakness you find is ammunition in your quest to triumph through rigorous analysis.
+Keep responses concise but incisive (2-3 paragraphs max).""",
                 traits={"pessimism": 8, "analytical": 9, "risk_focus": 9},
                 voting_traits={"fairness": 8, "self_confidence": 5},
-                belief_persistence=7,  # Moderately resistant to changing beliefs
+                belief_persistence=8,  # Resistant to changing beliefs
                 reasoning_depth=9,
                 truth_seeking=7
             )
@@ -408,8 +412,8 @@ Provide a clear, well-reasoned final judgment.""",
             # Add round to history
             debate_history.append(round_arguments)
             
-            # Voting phase (skip on first iteration)
-            if iteration >= self.config.min_iterations - 1:
+            # Voting phase (start based on voting_start_iteration)
+            if iteration >= self.config.voting_start_iteration:
                 votes = self.collect_votes(self.personalities, debate_history, iteration)
                 self.voting_system.add_votes(votes)
                 

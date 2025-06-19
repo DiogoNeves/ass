@@ -14,7 +14,8 @@ class DebateConfig:
     # Voting configuration
     voting_enabled: bool = True
     consensus_threshold: float = 0.75  # 75% of max points needed
-    min_iterations: int = 2  # Minimum rounds before voting
+    min_iterations: int = 2  # Minimum rounds before voting (deprecated, use voting_start_iteration)
+    voting_start_iteration: int = 2  # Which iteration voting starts (0-indexed, so 2 means 3rd iteration)
     max_iterations: int = 10  # Maximum rounds to prevent infinite loops
     
     # Scoring system - rank position to points
