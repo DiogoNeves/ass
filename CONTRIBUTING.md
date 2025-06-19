@@ -66,6 +66,8 @@ uv run pytest
 
 ## 🎯 Submitting Changes
 
+Keep each change small and easy to review.
+
 1. **Create a branch:** `git checkout -b feature/my-feature`
 2. **Make your changes**
 3. **Test thoroughly**
