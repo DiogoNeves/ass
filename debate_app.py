@@ -131,9 +131,10 @@ Provide a clear, well-reasoned final judgment.""",
         )
 
     def display_header(self):
-        header = Text("🏛️  ASS - ARGUMENTATIVE SYSTEM SERVICE  🏛️", style="bold blue")
-        subtitle = Text("Voting Mode Enabled" if self.config.voting_enabled else "Classic Mode", style="italic cyan")
-        console.print(Panel([header, subtitle], style="blue"))
+        header_text = "🏛️  ASS - ARGUMENTATIVE SYSTEM SERVICE  🏛️\n"
+        header_text += "Voting Mode Enabled" if self.config.voting_enabled else "Classic Mode"
+        
+        console.print(Panel(header_text, style="blue"))
         console.print()
 
     def get_question(self):
