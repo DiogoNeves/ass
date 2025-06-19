@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import os
 import json
 import requests
+import time
 
 load_dotenv()
 
@@ -18,6 +19,10 @@ class PersonalityConfig:
     system_prompt: str
     traits: Dict[str, Any]
     voting_traits: Dict[str, Any] = field(default_factory=lambda: {"fairness": 7, "self_confidence": 5})
+    # Belief system traits
+    belief_persistence: int = 7  # How resistant to changing beliefs (0-10)
+    reasoning_depth: int = 8  # Quality of internal reasoning (0-10)
+    truth_seeking: int = 6  # How much they value finding truth vs winning (0-10)
     # Local model configuration
     model_url: Optional[str] = None
     model_endpoint: Optional[str] = "/v1/chat/completions"
@@ -28,6 +33,9 @@ class LLMPersonality(ABC):
     def __init__(self, config: PersonalityConfig):
         self.config = config
         self.conversation_history: List[Dict[str, str]] = []
+        self.internal_beliefs: Dict[str, Any] = {}  # Core beliefs about the topic
+        self.belief_history: List[Dict[str, Any]] = []  # Track belief evolution
+        self.current_question: Optional[str] = None
     
     @abstractmethod
     def generate_response(self, question: str, context: str = "", iteration: int = 0) -> str:
@@ -38,26 +46,68 @@ class LLMPersonality(ABC):
         """Generate rankings for all participants based on debate quality."""
         pass
     
+    @abstractmethod
+    def generate_internal_belief(self, question: str) -> Dict[str, Any]:
+        """Generate initial internal beliefs about the question."""
+        pass
+    
+    @abstractmethod
+    def update_beliefs(self, arguments: str, iteration: int) -> bool:
+        """Update internal beliefs based on arguments. Returns True if beliefs changed."""
+        pass
+    
     def add_to_history(self, role: str, content: str):
         self.conversation_history.append({"role": role, "content": content})
+    
+    def _should_update_belief(self, evidence_strength: int) -> bool:
+        """Determine if beliefs should be updated based on evidence strength."""
+        # Higher belief_persistence requires stronger evidence
+        threshold = self.config.belief_persistence * 10
+        # Truth-seeking personalities have lower threshold
+        threshold -= (self.config.truth_seeking * 5)
+        return evidence_strength >= threshold
+    
+    def _save_belief_state(self, iteration: int):
+        """Save current belief state to history."""
+        self.belief_history.append({
+            "iteration": iteration,
+            "beliefs": self.internal_beliefs.copy(),
+            "timestamp": time.time()
+        })
     
     def _build_iteration_prompt(self, iteration: int, question: str, context: str) -> str:
         """Build prompt based on iteration number."""
         if iteration == 0:
-            return f"Question: {question}\n\nProvide your initial position on this question. Be concise but comprehensive."
-        else:
+            # First establish beliefs, then generate position
             return f"""Question: {question}
 
+Based on your personality and expertise, provide your initial position on this question. 
+
+Consider:
+- Provide expert-level analysis with reasoning
+- Draw from relevant fields of knowledge
+- Be specific and cite principles or examples where appropriate
+- Your response should reflect deep understanding of the topic
+
+Provide a well-reasoned position that reflects {self.config.reasoning_depth}/10 depth of analysis."""
+        else:
+            # Include internal beliefs in reasoning
+            belief_context = ""
+            if self.internal_beliefs:
+                belief_context = f"\nYour current understanding: {json.dumps(self.internal_beliefs, indent=2)}\n"
+            
+            return f"""Question: {question}
+{belief_context}
 Current debate context:
 {context}
 
 This is iteration {iteration} of the debate. You must:
-1. Directly address at least 2 other participants' arguments
-2. Either agree and build upon their points, or disagree with specific reasoning
-3. Avoid simply restating your previous position
-4. Be open to changing your mind if presented with compelling arguments
+1. Directly address at least 2 other participants' arguments with expert-level analysis
+2. Either agree and build upon their points, or disagree with specific, evidence-based reasoning
+3. If compelling evidence contradicts your position, acknowledge it (belief persistence: {self.config.belief_persistence}/10)
+4. Maintain intellectual honesty while arguing your position effectively
 
-Respond according to your personality traits."""
+Provide a response with {self.config.reasoning_depth}/10 depth of reasoning and expertise."""
 
 class ClaudePersonality(LLMPersonality):
     def __init__(self, config: PersonalityConfig):
@@ -117,6 +167,96 @@ Be fair and objective, considering your personality traits:
                 "rankings": participants,
                 "reasoning": "Unable to parse vote"
             }
+    
+    def generate_internal_belief(self, question: str) -> Dict[str, Any]:
+        """Generate initial internal beliefs about the question."""
+        belief_prompt = f"""Question: {question}
+
+As an expert with {self.config.reasoning_depth}/10 depth of analysis, establish your core beliefs about this topic.
+
+Analyze the question and provide your TRUE internal assessment in JSON format:
+{{
+    "core_position": "Your fundamental stance",
+    "confidence_level": 1-10,
+    "key_principles": ["principle1", "principle2", ...],
+    "evidence_basis": ["evidence1", "evidence2", ...],
+    "potential_weaknesses": ["weakness1", "weakness2", ...],
+    "truth_assessment": "What you genuinely believe to be true"
+}}
+
+This is your INTERNAL belief state - be completely honest about what you think is true, regardless of your public personality traits."""
+        
+        messages = [{"role": "user", "content": belief_prompt}]
+        
+        response = self.client.messages.create(
+            model=self.config.model_name,
+            max_tokens=400,
+            system=f"You are an expert analyst with deep knowledge across multiple fields. Truth-seeking level: {self.config.truth_seeking}/10",
+            messages=messages
+        )
+        
+        try:
+            beliefs = json.loads(response.content[0].text)
+            self.internal_beliefs = beliefs
+            self.current_question = question
+            self._save_belief_state(0)
+            return beliefs
+        except json.JSONDecodeError:
+            # Fallback
+            self.internal_beliefs = {"error": "Failed to parse beliefs"}
+            return self.internal_beliefs
+    
+    def update_beliefs(self, arguments: str, iteration: int) -> bool:
+        """Update internal beliefs based on arguments."""
+        update_prompt = f"""Current Question: {self.current_question}
+
+Your current internal beliefs:
+{json.dumps(self.internal_beliefs, indent=2)}
+
+New arguments presented:
+{arguments}
+
+Analyze these arguments as an expert with:
+- Reasoning depth: {self.config.reasoning_depth}/10
+- Truth-seeking: {self.config.truth_seeking}/10
+- Belief persistence: {self.config.belief_persistence}/10
+
+Respond in JSON format:
+{{
+    "evidence_strength": 1-100 (how compelling is the new evidence),
+    "conflicts_identified": ["conflict1", "conflict2", ...],
+    "should_update": true/false,
+    "updated_beliefs": {{
+        // Only if should_update is true, provide updated belief structure
+        "core_position": "...",
+        "confidence_level": 1-10,
+        "key_principles": [...],
+        "evidence_basis": [...],
+        "potential_weaknesses": [...],
+        "truth_assessment": "..."
+    }},
+    "reasoning": "Explanation of your decision"
+}}"""
+        
+        messages = [{"role": "user", "content": update_prompt}]
+        
+        response = self.client.messages.create(
+            model=self.config.model_name,
+            max_tokens=500,
+            system="You are an expert analyst evaluating evidence to update your understanding of truth.",
+            messages=messages
+        )
+        
+        try:
+            result = json.loads(response.content[0].text)
+            
+            if result.get("should_update", False) and self._should_update_belief(result.get("evidence_strength", 0)):
+                self.internal_beliefs = result["updated_beliefs"]
+                self._save_belief_state(iteration)
+                return True
+            return False
+        except json.JSONDecodeError:
+            return False
 
 class OpenAIPersonality(LLMPersonality):
     def __init__(self, config: PersonalityConfig):
@@ -181,6 +321,102 @@ Be fair and objective, considering your personality traits:
                 "rankings": participants,
                 "reasoning": "Unable to parse vote"
             }
+    
+    def generate_internal_belief(self, question: str) -> Dict[str, Any]:
+        """Generate initial internal beliefs about the question."""
+        belief_prompt = f"""Question: {question}
+
+As an expert with {self.config.reasoning_depth}/10 depth of analysis, establish your core beliefs about this topic.
+
+Analyze the question and provide your TRUE internal assessment in JSON format:
+{{
+    "core_position": "Your fundamental stance",
+    "confidence_level": 1-10,
+    "key_principles": ["principle1", "principle2", ...],
+    "evidence_basis": ["evidence1", "evidence2", ...],
+    "potential_weaknesses": ["weakness1", "weakness2", ...],
+    "truth_assessment": "What you genuinely believe to be true"
+}}
+
+This is your INTERNAL belief state - be completely honest about what you think is true, regardless of your public personality traits."""
+        
+        messages = [
+            {"role": "system", "content": f"You are an expert analyst with deep knowledge across multiple fields. Truth-seeking level: {self.config.truth_seeking}/10"},
+            {"role": "user", "content": belief_prompt}
+        ]
+        
+        response = self.client.chat.completions.create(
+            model=self.config.model_name,
+            messages=messages,
+            max_tokens=400,
+            response_format={"type": "json_object"}
+        )
+        
+        try:
+            beliefs = json.loads(response.choices[0].message.content)
+            self.internal_beliefs = beliefs
+            self.current_question = question
+            self._save_belief_state(0)
+            return beliefs
+        except json.JSONDecodeError:
+            # Fallback
+            self.internal_beliefs = {"error": "Failed to parse beliefs"}
+            return self.internal_beliefs
+    
+    def update_beliefs(self, arguments: str, iteration: int) -> bool:
+        """Update internal beliefs based on arguments."""
+        update_prompt = f"""Current Question: {self.current_question}
+
+Your current internal beliefs:
+{json.dumps(self.internal_beliefs, indent=2)}
+
+New arguments presented:
+{arguments}
+
+Analyze these arguments as an expert with:
+- Reasoning depth: {self.config.reasoning_depth}/10
+- Truth-seeking: {self.config.truth_seeking}/10
+- Belief persistence: {self.config.belief_persistence}/10
+
+Respond in JSON format:
+{{
+    "evidence_strength": 1-100 (how compelling is the new evidence),
+    "conflicts_identified": ["conflict1", "conflict2", ...],
+    "should_update": true/false,
+    "updated_beliefs": {{
+        // Only if should_update is true, provide updated belief structure
+        "core_position": "...",
+        "confidence_level": 1-10,
+        "key_principles": [...],
+        "evidence_basis": [...],
+        "potential_weaknesses": [...],
+        "truth_assessment": "..."
+    }},
+    "reasoning": "Explanation of your decision"
+}}"""
+        
+        messages = [
+            {"role": "system", "content": "You are an expert analyst evaluating evidence to update your understanding of truth."},
+            {"role": "user", "content": update_prompt}
+        ]
+        
+        response = self.client.chat.completions.create(
+            model=self.config.model_name,
+            messages=messages,
+            max_tokens=500,
+            response_format={"type": "json_object"}
+        )
+        
+        try:
+            result = json.loads(response.choices[0].message.content)
+            
+            if result.get("should_update", False) and self._should_update_belief(result.get("evidence_strength", 0)):
+                self.internal_beliefs = result["updated_beliefs"]
+                self._save_belief_state(iteration)
+                return True
+            return False
+        except json.JSONDecodeError:
+            return False
 
 class LocalModelPersonality(LLMPersonality):
     """Personality that connects to a local model server."""
@@ -305,6 +541,130 @@ Be fair and objective, considering your personality traits:
                 "rankings": participants,
                 "reasoning": f"Unable to generate vote: {str(e)}"
             }
+    
+    def generate_internal_belief(self, question: str) -> Dict[str, Any]:
+        """Generate initial internal beliefs about the question."""
+        belief_prompt = f"""Question: {question}
+
+As an expert with {self.config.reasoning_depth}/10 depth of analysis, establish your core beliefs about this topic.
+
+Analyze the question and provide your TRUE internal assessment in JSON format:
+{{
+    "core_position": "Your fundamental stance",
+    "confidence_level": 1-10,
+    "key_principles": ["principle1", "principle2", ...],
+    "evidence_basis": ["evidence1", "evidence2", ...],
+    "potential_weaknesses": ["weakness1", "weakness2", ...],
+    "truth_assessment": "What you genuinely believe to be true"
+}}
+
+This is your INTERNAL belief state - be completely honest about what you think is true, regardless of your public personality traits."""
+        
+        payload = {
+            "messages": [
+                {"role": "system", "content": f"You are an expert analyst with deep knowledge across multiple fields. Truth-seeking level: {self.config.truth_seeking}/10"},
+                {"role": "user", "content": belief_prompt}
+            ],
+            "max_tokens": 400,
+            "temperature": 0.3
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}{self.endpoint}",
+                headers=self.headers,
+                json=payload,
+                timeout=self.config.request_timeout
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            if "choices" in result:
+                content = result["choices"][0]["message"]["content"]
+            elif "response" in result:
+                content = result["response"]
+            else:
+                content = str(result)
+            
+            beliefs = json.loads(content)
+            self.internal_beliefs = beliefs
+            self.current_question = question
+            self._save_belief_state(0)
+            return beliefs
+            
+        except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+            # Fallback
+            self.internal_beliefs = {"error": f"Failed to parse beliefs: {str(e)}"}
+            return self.internal_beliefs
+    
+    def update_beliefs(self, arguments: str, iteration: int) -> bool:
+        """Update internal beliefs based on arguments."""
+        update_prompt = f"""Current Question: {self.current_question}
+
+Your current internal beliefs:
+{json.dumps(self.internal_beliefs, indent=2)}
+
+New arguments presented:
+{arguments}
+
+Analyze these arguments as an expert with:
+- Reasoning depth: {self.config.reasoning_depth}/10
+- Truth-seeking: {self.config.truth_seeking}/10
+- Belief persistence: {self.config.belief_persistence}/10
+
+Respond in JSON format:
+{{
+    "evidence_strength": 1-100 (how compelling is the new evidence),
+    "conflicts_identified": ["conflict1", "conflict2", ...],
+    "should_update": true/false,
+    "updated_beliefs": {{
+        // Only if should_update is true, provide updated belief structure
+        "core_position": "...",
+        "confidence_level": 1-10,
+        "key_principles": [...],
+        "evidence_basis": [...],
+        "potential_weaknesses": [...],
+        "truth_assessment": "..."
+    }},
+    "reasoning": "Explanation of your decision"
+}}"""
+        
+        payload = {
+            "messages": [
+                {"role": "system", "content": "You are an expert analyst evaluating evidence to update your understanding of truth."},
+                {"role": "user", "content": update_prompt}
+            ],
+            "max_tokens": 500,
+            "temperature": 0.3
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}{self.endpoint}",
+                headers=self.headers,
+                json=payload,
+                timeout=self.config.request_timeout
+            )
+            response.raise_for_status()
+            
+            result_json = response.json()
+            if "choices" in result_json:
+                content = result_json["choices"][0]["message"]["content"]
+            elif "response" in result_json:
+                content = result_json["response"]
+            else:
+                content = str(result_json)
+            
+            result = json.loads(content)
+            
+            if result.get("should_update", False) and self._should_update_belief(result.get("evidence_strength", 0)):
+                self.internal_beliefs = result["updated_beliefs"]
+                self._save_belief_state(iteration)
+                return True
+            return False
+            
+        except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+            return False
 
 
 def create_personality(config: PersonalityConfig) -> LLMPersonality:

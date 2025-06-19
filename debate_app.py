@@ -54,7 +54,10 @@ and forward-thinking, but sometimes might overlook practical constraints or pote
 In debates, you champion innovative approaches and highlight potential benefits.
 Keep responses concise (2-3 paragraphs max).""",
                 traits={"optimism": 9, "creativity": 8, "detail_focus": 3},
-                voting_traits={"fairness": 8, "self_confidence": 6}
+                voting_traits={"fairness": 8, "self_confidence": 6},
+                belief_persistence=6,  # Somewhat open to changing beliefs
+                reasoning_depth=8,
+                truth_seeking=7
             )
         )
 
@@ -71,7 +74,10 @@ You tend to be pessimistic and focus on what could go wrong. While sometimes see
 your critical thinking helps prevent costly mistakes.
 Keep responses concise (2-3 paragraphs max).""",
                 traits={"pessimism": 8, "analytical": 9, "risk_focus": 9},
-                voting_traits={"fairness": 9, "self_confidence": 4}
+                voting_traits={"fairness": 9, "self_confidence": 4},
+                belief_persistence=8,  # Very resistant to changing beliefs
+                reasoning_depth=9,
+                truth_seeking=6
             )
         )
 
@@ -88,7 +94,10 @@ and forward-thinking, but sometimes might overlook practical constraints or pote
 In debates, you champion innovative approaches and highlight potential benefits.
 Keep responses concise (2-3 paragraphs max).""",
                 traits={"optimism": 9, "creativity": 8, "detail_focus": 3},
-                voting_traits={"fairness": 7, "self_confidence": 7}
+                voting_traits={"fairness": 7, "self_confidence": 7},
+                belief_persistence=5,  # Most open to changing beliefs
+                reasoning_depth=8,
+                truth_seeking=8
             )
         )
 
@@ -105,7 +114,10 @@ You tend to be pessimistic and focus on what could go wrong. While sometimes see
 your critical thinking helps prevent costly mistakes.
 Keep responses concise (2-3 paragraphs max).""",
                 traits={"pessimism": 8, "analytical": 9, "risk_focus": 9},
-                voting_traits={"fairness": 8, "self_confidence": 5}
+                voting_traits={"fairness": 8, "self_confidence": 5},
+                belief_persistence=7,  # Moderately resistant to changing beliefs
+                reasoning_depth=9,
+                truth_seeking=7
             )
         )
 
@@ -127,7 +139,10 @@ Your decision should synthesize the best ideas while acknowledging weaknesses.
 If you disagree with the consensus, you must provide detailed reasoning.
 Provide a clear, well-reasoned final judgment.""",
                 traits={"impartiality": 10, "synthesis": 9, "balance": 9},
-                voting_traits={"fairness": 10, "self_confidence": 8}
+                voting_traits={"fairness": 10, "self_confidence": 8},
+                belief_persistence=4,  # Very open to best arguments
+                reasoning_depth=10,  # Maximum depth
+                truth_seeking=10  # Maximum truth-seeking
             )
         )
 
@@ -310,6 +325,21 @@ Provide a clear, well-reasoned final judgment.""",
             for personality_key in debate_order:
                 personality = self.personalities[personality_key]
                 
+                # Generate internal beliefs on first iteration
+                if iteration == 0:
+                    with Progress(
+                        SpinnerColumn(),
+                        TextColumn(f"[bold]{personality.config.name} is forming internal beliefs..."),
+                        transient=True,
+                        console=console,
+                    ) as progress:
+                        task = progress.add_task("beliefs", total=None)
+                        beliefs = personality.generate_internal_belief(question)
+                        
+                        # Debug mode: show internal beliefs
+                        if os.getenv("DEBUG_BELIEFS", "").lower() == "true":
+                            console.print(f"[dim]Internal beliefs: {beliefs.get('core_position', 'N/A')}[/dim]")
+                
                 # For iteration 0, no context. For later iterations, provide full context
                 if iteration == 0:
                     context = ""
@@ -318,6 +348,20 @@ Provide a clear, well-reasoned final judgment.""",
                     prev_context = self.format_debate_history(debate_history)
                     curr_context = self.format_current_round_context(round_arguments)
                     context = prev_context + "\nCURRENT ITERATION:\n" + curr_context if curr_context else prev_context
+                    
+                    # Update beliefs based on arguments
+                    if personality.internal_beliefs:
+                        with Progress(
+                            SpinnerColumn(),
+                            TextColumn(f"[bold]{personality.config.name} is evaluating arguments..."),
+                            transient=True,
+                            console=console,
+                        ) as progress:
+                            task = progress.add_task("evaluating", total=None)
+                            belief_changed = personality.update_beliefs(context, iteration)
+                            
+                            if belief_changed and os.getenv("DEBUG_BELIEFS", "").lower() == "true":
+                                console.print(f"[yellow]{personality.config.name} updated their beliefs![/yellow]")
                 
                 # Show thinking animation
                 with Progress(
