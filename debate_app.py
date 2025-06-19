@@ -286,7 +286,6 @@ class DebateApp:
         header = Text("🏛️  ASS - ARGUMENTATIVE SYSTEM SERVICE  🏛️", style="bold blue")
         console.print(Panel(header, style="blue"))
         console.print()
-    
     def get_question(self) -> str:
         """Prompt the user for a debate question.
         

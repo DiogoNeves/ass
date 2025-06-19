@@ -35,7 +35,7 @@
 | **🔬 Gemini Analyst** | Google | Systematic, critical, detail-focused | Evaluates long-term implications |
 | **🤝 Gemini Mediator** | Google | Balanced, thoughtful, bridge-building | Finds common ground between views |
 
-- After three rounds of heated debate, an **impartial Judge** synthesizes all arguments into a balanced final decision.
+After the debate, an **impartial Judge** (either Claude or Gemini) synthesizes all arguments into a balanced final decision.
 
 ## 🎬 Example Debates
 
