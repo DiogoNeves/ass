@@ -11,7 +11,6 @@ from personality import PersonalityConfig, create_personality, LLMPersonality
 
 console = Console()
 
-
 class DebateApp:
     """Main application class for running AI-powered debates.
     
@@ -20,6 +19,7 @@ class DebateApp:
     """
     
     def __init__(self):
+
         """Initialize the debate application and setup required components."""
         self.selected_providers: List[str] = self._select_providers()
         while True:
