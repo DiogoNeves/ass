@@ -18,7 +18,7 @@ from personalities.claude import ClaudePersonality
 from models.personality import PersonalityConfig
 from voting import VotingSystem
 from models.voting import Vote, VotingConfig
-from models.debate import DebateConfig
+from config import DebateConfig  # Using old config for backward compatibility
 
 console = Console()
 
