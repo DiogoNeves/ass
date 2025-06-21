@@ -522,7 +522,7 @@ Provide a clear, well-reasoned final judgment.""",
             if iteration >= self.config.voting_start_iteration and votes:
                 iteration_data["votes"] = [
                     {
-                        "voter": vote.voter_name,
+                        "voter": vote.voter,
                         "rankings": vote.rankings,
                         "reasoning": vote.reasoning
                     }
