@@ -12,3 +12,8 @@ dependencies = [
     "requests>=2.31.0",
     "pydantic>=2.11.6",
 ]
+
+[dependency-groups]
+dev = [
+    "pylint>=3.3.7",
+]

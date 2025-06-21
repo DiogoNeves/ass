@@ -14,6 +14,7 @@ from rich.table import Table
 from rich.columns import Columns
 
 from personality import create_personality, LLMPersonality
+from personalities.claude import ClaudePersonality
 from models.personality import PersonalityConfig
 from voting import VotingSystem
 from models.voting import Vote, VotingConfig

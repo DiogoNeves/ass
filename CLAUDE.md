@@ -76,3 +76,6 @@ uv add <package-name>
 
 ## Project Philosophy
 This project demonstrates creative AI integration while maintaining clean, extensible code. It's both a functional debate simulator and a showcase of modern Python development practices with AI APIs.
+
+## Development Tools
+- Use pylint
