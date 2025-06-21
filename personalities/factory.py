@@ -1,12 +1,12 @@
 """Factory function for creating personality instances."""
 
-from typing import Optional
+
+from models.personality import PersonalityConfig
 
 from .base import LLMPersonality
 from .claude import ClaudePersonality
-from .openai import OpenAIPersonality
 from .local import LocalModelPersonality
-from models.personality import PersonalityConfig
+from .openai import OpenAIPersonality
 
 
 def create_personality(config: PersonalityConfig) -> LLMPersonality:

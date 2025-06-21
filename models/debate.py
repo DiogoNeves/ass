@@ -1,7 +1,8 @@
 """Debate-related Pydantic models with validation."""
 
-from typing import Dict, List, Optional, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 

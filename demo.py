@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
-from debate_app import DebateApp
-from config import DebateConfig
 import sys
+
+from config import DebateConfig
+from debate_app import DebateApp
+
 
 def main():
     # Check if voting mode is requested

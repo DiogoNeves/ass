@@ -79,3 +79,6 @@ This project demonstrates creative AI integration while maintaining clean, exten
 
 ## Development Tools
 - Use pylint
+
+## Claude Memories
+- you're awesome!

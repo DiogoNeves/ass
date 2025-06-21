@@ -2,9 +2,9 @@
 
 from .base import LLMPersonality
 from .claude import ClaudePersonality
-from .openai import OpenAIPersonality
-from .local import LocalModelPersonality
 from .factory import create_personality
+from .local import LocalModelPersonality
+from .openai import OpenAIPersonality
 
 __all__ = [
     "LLMPersonality",

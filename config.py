@@ -1,7 +1,8 @@
-from dataclasses import dataclass, field
-from typing import Dict, Optional
 import json
 import os
+from dataclasses import dataclass, field
+from typing import Dict, Optional
+
 from dotenv import load_dotenv
 
 load_dotenv()

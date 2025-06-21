@@ -1,13 +1,14 @@
 """OpenAI personality implementation."""
 
-import os
 import json
-from typing import Dict, List, Any
+import os
+from typing import Any, Dict, List
 
 import openai
 
-from .base import LLMPersonality
 from models.personality import PersonalityConfig
+
+from .base import LLMPersonality
 
 
 class OpenAIPersonality(LLMPersonality):

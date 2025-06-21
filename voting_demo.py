@@ -7,8 +7,9 @@ This simulates how the voting works in the debate system.
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from voting import Vote, VotingConfig, VotingSystem
+
 from config import DebateConfig
+from voting import Vote, VotingConfig, VotingSystem
 
 console = Console()
 

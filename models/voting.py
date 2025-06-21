@@ -1,8 +1,9 @@
 """Voting-related Pydantic models with validation."""
 
-from typing import Dict, List, Optional, Tuple
-from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Vote(BaseModel):

@@ -1,13 +1,13 @@
 """Rich terminal formatting utilities."""
 
-from typing import List, Dict, Optional, Any
+from typing import Any, Dict, List, Optional
+
+from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 from rich.text import Text
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.layout import Layout
-from rich.align import Align
 
 
 class RichFormatter:

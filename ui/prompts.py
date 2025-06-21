@@ -1,8 +1,9 @@
 """User input and prompting utilities."""
 
-from typing import Optional, List, Dict, Any
+from typing import List, Optional
+
 from rich.console import Console
-from rich.prompt import Prompt, Confirm, IntPrompt
+from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.table import Table
 
 

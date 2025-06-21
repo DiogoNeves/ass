@@ -1,12 +1,13 @@
 """Local model personality implementation."""
 
 import json
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 import requests
 
-from .base import LLMPersonality
 from models.personality import PersonalityConfig
+
+from .base import LLMPersonality
 
 
 class LocalModelPersonality(LLMPersonality):

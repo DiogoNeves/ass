@@ -1,19 +1,19 @@
 """Core debate orchestration service."""
 
-from typing import Dict, List, Optional, Any
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
-from models.debate import DebateConfig, DebateState, DebateIteration
-from models.voting import Vote, VotingConfig
 from models.arguments import Argument, DebateContext
-from voting import VotingSystem
+from models.debate import DebateConfig, DebateIteration, DebateState
+from models.voting import Vote
 from personality import LLMPersonality
+from voting import VotingSystem
 
 
 class DebateManager:

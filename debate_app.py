@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 
-import time
-import os
 import json
+import os
+import time
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
+
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
-from rich.prompt import Prompt
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.prompt import Prompt
 from rich.table import Table
-from rich.columns import Columns
 
-from personality import create_personality, LLMPersonality
-from personalities.claude import ClaudePersonality
-from models.personality import PersonalityConfig
-from voting import VotingSystem
-from models.voting import Vote, VotingConfig
 from config import DebateConfig  # Using old config for backward compatibility
+from models.personality import PersonalityConfig
+from models.voting import Vote, VotingConfig
+from personalities.claude import ClaudePersonality
+from personality import LLMPersonality, create_personality
+from voting import VotingSystem
 
 console = Console()
 
