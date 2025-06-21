@@ -163,10 +163,12 @@ Provide a clear, well-reasoned final judgment.""",
         if self.config.voting_enabled:
             console.print(
                 "AI personalities will debate until reaching consensus through voting.\n"
+                "[dim]Press Ctrl+C at any time to stop the debate.[/dim]\n"
             )
         else:
             console.print(
                 "Four AI personalities will debate your question for 3 rounds.\n"
+                "[dim]Press Ctrl+C at any time to stop the debate.[/dim]\n"
             )
 
         question = Prompt.ask(
@@ -429,14 +431,10 @@ Provide a clear, well-reasoned final judgment.""",
             
             iteration += 1
             
-            # Add a pause between iterations
+            # Brief pause between iterations for readability
             if not consensus_reached and iteration < self.config.max_iterations:
-                if self.demo_mode:
-                    console.print("\n[dim]Proceeding to next iteration...[/dim]")
-                    time.sleep(2)  # Brief pause in demo mode
-                else:
-                    console.print("\n[dim]Press Enter to continue to next iteration...[/dim]")
-                    input()
+                console.print("\n[dim]Proceeding to next iteration...[/dim]")
+                time.sleep(1)  # Brief pause for readability
         
         # Judge's final decision
         self._render_judge_decision_with_voting(question, debate_history, final_votes)
