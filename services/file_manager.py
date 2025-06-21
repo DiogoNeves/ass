@@ -10,7 +10,7 @@ from anthropic import Anthropic
 from pydantic import ValidationError
 from rich.console import Console
 
-from ..models.debate import DebateState
+from models.debate import DebateState
 
 
 class FileManager:

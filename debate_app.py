@@ -13,9 +13,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 from rich.columns import Columns
 
-from personality import PersonalityConfig, create_personality, LLMPersonality, ClaudePersonality
-from voting import Vote, VotingConfig, VotingSystem
-from config import DebateConfig
+from personality import create_personality, LLMPersonality
+from models.personality import PersonalityConfig
+from voting import VotingSystem
+from models.voting import Vote, VotingConfig
+from models.debate import DebateConfig
 
 console = Console()
 

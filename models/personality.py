@@ -36,11 +36,16 @@ class PersonalityTraits(BaseModel):
 class PersonalityConfig(BaseModel):
     """Configuration for an AI personality."""
     name: str = Field(..., min_length=1, max_length=50, description="Display name")
-    role: str = Field(..., min_length=1, description="Role description")
-    perspective: str = Field(..., min_length=1, description="Unique perspective")
-    debate_style: str = Field(..., min_length=1, description="How they argue")
     model_provider: str = Field(..., pattern="^(claude|openai|local)$", description="LLM provider")
     model_name: str = Field(..., min_length=1, description="Model identifier")
+    
+    # For backward compatibility - will be used to generate role/perspective/style
+    system_prompt: str = Field(..., min_length=1, description="System prompt for the model")
+    
+    # Optional role/perspective/style - generated from system_prompt if not provided
+    role: Optional[str] = Field(None, description="Role description")
+    perspective: Optional[str] = Field(None, description="Unique perspective")
+    debate_style: Optional[str] = Field(None, description="How they argue")
     
     # Advanced traits
     reasoning_depth: int = Field(
@@ -98,6 +103,32 @@ class PersonalityConfig(BaseModel):
         description="Specific knowledge or expertise"
     )
     
+    # Legacy/backward compatibility fields
+    traits: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Legacy personality traits"
+    )
+    
+    # Local model configuration
+    model_url: Optional[str] = Field(
+        None,
+        description="URL for local model server"
+    )
+    model_endpoint: Optional[str] = Field(
+        default="/v1/chat/completions",
+        description="Endpoint for local model"
+    )
+    auth_token: Optional[str] = Field(
+        None,
+        description="Authentication token for local model"
+    )
+    request_timeout: int = Field(
+        default=30,
+        ge=1,
+        le=300,
+        description="Request timeout in seconds"
+    )
+    
     @field_validator('name')
     @classmethod
     def validate_name(cls, v: str) -> str:
@@ -121,10 +152,16 @@ class PersonalityConfig(BaseModel):
     
     def to_system_prompt(self) -> str:
         """Generate a system prompt from the configuration."""
-        prompt = f"""You are {self.name}, {self.role}.
+        # If system_prompt is provided, use it directly
+        if hasattr(self, 'system_prompt') and self.system_prompt:
+            return self.system_prompt
+            
+        # Otherwise, generate from components
+        role_text = self.role or "a debate participant"
+        prompt = f"""You are {self.name}, {role_text}.
 
-Your perspective: {self.perspective}
-Your debate style: {self.debate_style}
+Your perspective: {self.perspective or "bringing unique insights to the debate"}
+Your debate style: {self.debate_style or "thoughtful and analytical"}
 
 Personality traits:
 - Reasoning depth: {self.reasoning_depth}/10

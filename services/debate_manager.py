@@ -9,11 +9,11 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from ..models.debate import DebateConfig, DebateState, DebateIteration
-from ..models.voting import Vote, VotingConfig
-from ..models.arguments import Argument, DebateContext
-from ..voting import VotingSystem
-from ..personality import LLMPersonality
+from models.debate import DebateConfig, DebateState, DebateIteration
+from models.voting import Vote, VotingConfig
+from models.arguments import Argument, DebateContext
+from voting import VotingSystem
+from personality import LLMPersonality
 
 
 class DebateManager:
