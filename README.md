@@ -173,24 +173,39 @@ Use `--classic-mode` to run the original 3-round format.
 
 ## 🛠️ Architecture
 
-The application uses a modular **Personality System** that makes it easy to create new AI debaters:
+The application uses a modular architecture with **Pydantic validation** and clear separation of concerns:
 
 ```python
-# Create a new personality
+# Create a new personality with validated configuration
+from models.personality import PersonalityConfig
+from personalities import create_personality
+
 new_personality = create_personality(PersonalityConfig(
     name="My Custom Debater",
-    model_provider="claude",  # or "openai" 
-    model_name="claude-sonnet-4-20250514",
+    model_provider="claude",  # or "openai" or "local"
+    model_name="claude-3-5-sonnet-20241112",
     system_prompt="Your personality description...",
-    traits={"creativity": 8, "skepticism": 6, "humor": 9}
+    reasoning_depth=8,
+    truth_seeking=7,
+    voting_traits=PersonalityTraits(fairness=8, self_confidence=6)
 ))
 ```
 
 **Key Components:**
-- `PersonalityConfig` - Define model, prompts, and personality traits
-- `LLMPersonality` - Abstract base class for all personalities  
-- `create_personality()` - Factory function for easy personality creation
-- Rich CLI interface with beautiful formatting and animations
+- **`models/`** - Pydantic models with automatic validation:
+  - `PersonalityConfig` - Validated personality configuration
+  - `Vote`, `VotingConfig` - Voting system models
+  - `DebateConfig`, `DebateState` - Debate management
+  - `Argument`, `ArgumentHistory` - Argument tracking
+- **`personalities/`** - AI personality implementations:
+  - `LLMPersonality` - Abstract base class
+  - `ClaudePersonality`, `OpenAIPersonality`, `LocalModelPersonality`
+- **`services/`** - Business logic:
+  - `DebateManager` - Core debate orchestration
+  - `FileManager` - Save/load debates with AI titles
+- **`ui/`** - User interface:
+  - `RichFormatter` - Terminal formatting
+  - `PromptHandler` - User input handling
 
 ## 💡 Interesting Questions to Try
 
@@ -225,24 +240,36 @@ new_personality = create_personality(PersonalityConfig(
 - **🤖 Multi-Model Support** - Claude, OpenAI, and local model servers
 - **⚖️ Truth-Seeking Judge** - Maximum reasoning depth and openness to best arguments
 - **🎯 Sophisticated Traits** - Belief persistence, reasoning depth, truth-seeking levels
+- **✅ Pydantic Validation** - Runtime validation of all data structures with clear error messages
 - **🔧 Highly Configurable** - JSON configs, environment variables, CLI flags
 - **📈 Belief Tracking** - Monitor how positions evolve through debate
 - **🎭 Rich CLI Interface** - Beautiful formatting with progress indicators
 - **💾 Automatic Debate Saving** - Preserves complete debate history with AI-generated titles
+- **🏗️ Modular Architecture** - Clear separation between models, services, UI, and personalities
 
 ## 🔧 Customization
 
 ### Adding New Personalities
 
-Extend the debate by creating personalities with unique traits:
+Extend the debate by creating personalities with unique traits (with full validation):
 
 ```python
+from models.personality import PersonalityConfig, PersonalityTraits
+
 personalities["economist"] = create_personality(PersonalityConfig(
-    name="Dr. Economy",
+    name="Dr. Economy", 
     model_provider="openai",
-    model_name="gpt-4.1-2025-04-14",
+    model_name="gpt-4o-20250117",
     system_prompt="You are a pragmatic economist focused on costs, benefits, and market dynamics...",
-    traits={"analytical": 9, "pragmatic": 8, "data_focused": 10}
+    reasoning_depth=9,
+    truth_seeking=8,
+    belief_persistence=7,
+    voting_traits=PersonalityTraits(
+        fairness=8,
+        self_confidence=7,
+        strategic_thinking=9,
+        empathy=6
+    )
 ))
 ```
 
@@ -336,18 +363,39 @@ Create a JSON configuration file (see `sample_config.json`):
 ```
 ass/
 ├── 📄 README.md           # This file
-├── ⚙️ pyproject.toml      # UV project configuration  
+├── ⚙️ pyproject.toml      # UV project configuration (includes Pydantic)
 ├── 🔒 uv.lock            # Dependency lock file
 ├── 🔐 .env               # API keys (create this)
-├── 📁 .venv/             # Virtual environment (auto-created)
-├── 🧠 personality.py      # Personality system and API integrations
-├── 🗳️ voting.py          # Voting system and consensus logic
-├── ⚙️ config.py          # Configuration management
-├── 🎭 debate_app.py       # Main interactive application
-├── 🎬 demo.py            # Demo runner with sample debates
-├── 📋 sample_config.json  # Example configuration file
-├── 📄 VOTING-FEATURE.md   # Voting feature requirements
-└── 📁 debates/            # Saved debate files (auto-created)
+├── 📁 models/            # Pydantic data models with validation
+│   ├── __init__.py
+│   ├── personality.py    # PersonalityConfig, PersonalityTraits
+│   ├── voting.py         # Vote, VotingConfig, VotingResult
+│   ├── debate.py         # DebateConfig, DebateState
+│   └── arguments.py      # Argument, ArgumentHistory
+├── 📁 personalities/     # AI personality implementations
+│   ├── __init__.py
+│   ├── base.py          # LLMPersonality abstract base class
+│   ├── claude.py        # Claude implementation
+│   ├── openai.py        # OpenAI implementation
+│   ├── local.py         # Local model implementation
+│   └── factory.py       # create_personality factory
+├── 📁 services/         # Business logic services
+│   ├── __init__.py
+│   ├── debate_manager.py # Core debate orchestration
+│   └── file_manager.py   # Save/load with AI titles
+├── 📁 ui/               # User interface components
+│   ├── __init__.py
+│   ├── rich_formatter.py # Rich terminal formatting
+│   └── prompts.py       # User input handling
+├── 🧠 personality.py     # Backward compatibility imports
+├── 🗳️ voting.py         # Voting system implementation
+├── ⚙️ config.py         # Legacy configuration (use models/debate.py)
+├── 🎭 debate_app.py      # Main interactive application
+├── 🎬 demo.py           # Demo runner with sample debates
+├── 📋 sample_config.json # Example configuration file
+├── 📄 VOTING-FEATURE.md  # Voting feature requirements
+└── 📁 debates/          # Saved debate files (auto-created)
+    └── .gitkeep         # Keeps folder in git
 ```
 
 ## 🤝 Contributing
