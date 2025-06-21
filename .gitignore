@@ -86,3 +86,6 @@ cache/
 # Debate save files
 debates/*
 !debates/.gitkeep
+
+# Development reports
+PYLINT_REPORT.md
