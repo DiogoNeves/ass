@@ -420,15 +420,48 @@ git clone https://github.com/DiogoNeves/ass.git
 cd ass
 uv sync
 
-# Run tests (if you add them)
-uv run pytest
+# Install development dependencies
+uv sync --dev
 
-# Format code
-uv run black .
+# Set up pre-commit hooks (one-time)
+uv run pre-commit install
+
+# Code quality checks
+uv run pylint *.py                    # Linting (baseline ~6.6/10)
+uv run isort . --check-only          # Check import order
+uv run autoflake --check -r .        # Check for unused imports
+
+# Auto-fix code issues
+uv run isort .                       # Fix import ordering
+uv run autoflake --remove-all-unused-imports -r . -i  # Remove unused imports
+
+# Run tests (when added)
+uv run pytest
 
 # Run a debate without saving
 uv run python debate_app.py --no-save
 ```
+
+### Code Quality Tools
+
+The project uses several tools to maintain code quality:
+
+- **pre-commit** - Runs automatic checks before each commit
+- **pylint** - Static code analysis (config in `.pylintrc`)
+- **isort** - Import sorting (config in `.isort.cfg`)
+- **autoflake** - Removes unused imports and variables
+- **Pydantic** - Runtime validation for all data models
+
+Current pylint score: ~6.6/10 (improving over time)
+
+Pre-commit hooks automatically run:
+- Import sorting with isort
+- Unused import removal with autoflake
+- Trailing whitespace removal
+- File ending fixes
+- YAML/JSON validation
+
+Note: pylint is not included in pre-commit due to speed, run it separately.
 
 ### 💾 Automatic Debate Saving
 

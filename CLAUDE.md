@@ -12,7 +12,11 @@ ASS (Argumentative System Service) is a Python CLI application that simulates AI
 
 ## Key Files to Know
 - `debate_app.py` - Main interactive application entry point
-- `personality.py` - Core personality system with LLMPersonality base class
+- `models/` - Pydantic models with validation (PersonalityConfig, Vote, DebateConfig, etc.)
+- `personalities/` - AI personality implementations (base class, Claude, OpenAI, local)
+- `services/` - Business logic (DebateManager, FileManager)
+- `ui/` - User interface components (RichFormatter, PromptHandler)
+- `personality.py` - Backward compatibility imports
 - `demo.py` - Simple demo runner for quick testing
 - `pyproject.toml` - Project configuration and dependencies
 
@@ -31,27 +35,39 @@ uv run python demo.py
 
 # Add new dependency
 uv add <package-name>
+
+# Code quality checks
+uv run pylint *.py
+uv run isort . --check-only
+uv run autoflake --check -r .
+
+# Fix imports automatically
+uv run isort .
 ```
 
 ## Code Conventions
 1. **Personality System**: Use abstract base class pattern, implement `create_personality()` factory
-2. **Configuration**: Use dataclasses (e.g., `PersonalityConfig`) for structured config
+2. **Configuration**: Use Pydantic models for validation (PersonalityConfig, DebateConfig, Vote, etc.)
 3. **UI**: Use Rich library for terminal output (panels, colors, animations)
 4. **Error Handling**: Graceful handling of API errors with user-friendly messages
 5. **Environment**: API keys in `.env` file (never commit!)
+6. **Imports**: Use isort for consistent import ordering (stdlib → third-party → local)
+7. **Code Quality**: Run pylint regularly, current baseline score ~6.6/10
 
 ## Architecture Patterns
 - **Factory Pattern**: For creating personalities based on configuration
 - **Context Accumulation**: Each personality maintains conversation history
 - **Provider Agnostic**: Support multiple LLM providers through abstract interfaces
-- **Structured Debate**: 3-round format (opening � rebuttals � final positions)
+- **Structured Debate**: 3-round format (opening → rebuttals → final positions)
+- **Modular Design**: Clear separation between models/, services/, ui/, and personalities/
+- **Pydantic Validation**: Runtime type checking and validation for all data structures
 
 ## Common Tasks
 ### Adding a New Personality Type
-1. Create new class inheriting from `LLMPersonality` in `personality.py`
-2. Implement required methods: `generate_argument()`, `_format_history()`
-3. Update `create_personality()` factory function
-4. Add configuration in `PersonalityConfig`
+1. Create new class inheriting from `LLMPersonality` in `personalities/`
+2. Implement required methods: `generate_response()`, `generate_vote()`, `generate_internal_belief()`, `update_beliefs()`
+3. Update `create_personality()` factory function in `personalities/factory.py`
+4. Add configuration using Pydantic `PersonalityConfig` model
 
 ### Modifying Debate Structure
 1. Edit debate flow in `debate_app.py`
