@@ -82,3 +82,6 @@ Thumbs.db
 # API responses cache (if we add caching)
 .cache/
 cache/
+
+# Debate save files
+debates/

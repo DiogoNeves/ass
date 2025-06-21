@@ -32,6 +32,9 @@ class DebateConfig:
     # Classic mode (3 rounds, no voting)
     classic_mode: bool = False
     
+    # File saving
+    save_enabled: bool = True
+    
     # Personality voting traits
     default_voting_traits: Dict[str, int] = field(
         default_factory=lambda: {"fairness": 7, "self_confidence": 5}
@@ -65,6 +68,9 @@ class DebateConfig:
         if os.getenv("LOCAL_MODEL_URL"):
             config.allow_local_models = True
         
+        if os.getenv("DEBATE_SAVE_ENABLED") is not None:
+            config.save_enabled = os.getenv("DEBATE_SAVE_ENABLED").lower() == "true"
+        
         return config
     
     def to_dict(self) -> Dict:
@@ -80,7 +86,9 @@ class DebateConfig:
             "allow_local_models": self.allow_local_models,
             "local_model_timeout": self.local_model_timeout,
             "classic_mode": self.classic_mode,
-            "default_voting_traits": self.default_voting_traits
+            "default_voting_traits": self.default_voting_traits,
+            "save_enabled": self.save_enabled,
+            "voting_start_iteration": self.voting_start_iteration
         }
     
     def save_to_file(self, config_path: str):

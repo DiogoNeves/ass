@@ -228,6 +228,7 @@ new_personality = create_personality(PersonalityConfig(
 - **🔧 Highly Configurable** - JSON configs, environment variables, CLI flags
 - **📈 Belief Tracking** - Monitor how positions evolve through debate
 - **🎭 Rich CLI Interface** - Beautiful formatting with progress indicators
+- **💾 Automatic Debate Saving** - Preserves complete debate history with AI-generated titles
 
 ## 🔧 Customization
 
@@ -282,6 +283,9 @@ uv run python debate_app.py --local-model-url http://localhost:8080
 
 # Configuration file
 uv run python debate_app.py --config my_config.json
+
+# Disable automatic saving
+uv run python debate_app.py --no-save
 ```
 
 #### Environment Variables
@@ -342,7 +346,8 @@ ass/
 ├── 🎭 debate_app.py       # Main interactive application
 ├── 🎬 demo.py            # Demo runner with sample debates
 ├── 📋 sample_config.json  # Example configuration file
-└── 📄 VOTING-FEATURE.md   # Voting feature requirements
+├── 📄 VOTING-FEATURE.md   # Voting feature requirements
+└── 📁 debates/            # Saved debate files (auto-created)
 ```
 
 ## 🤝 Contributing
@@ -356,7 +361,7 @@ We welcome contributions! Here are some ideas:
 - **🎨 UI Improvements** - Better visualizations, vote graphs, debate trees
 - **📊 Analytics** - Argument quality metrics, consensus patterns, debate statistics
 - **🌐 Web Interface** - Browser-based version with real-time updates
-- **💾 Debate History** - Save and replay interesting debates
+- **💾 Enhanced Debate History** - Advanced analysis and replay features
 - **🔍 Argument Mining** - Extract key points and conclusions automatically
 
 ### Development Setup
@@ -372,6 +377,53 @@ uv run pytest
 
 # Format code
 uv run black .
+
+# Run a debate without saving
+uv run python debate_app.py --no-save
+```
+
+### 💾 Automatic Debate Saving
+
+Debates are automatically saved to JSON files in the `debates/` directory with:
+- **AI-Generated Titles** - Using Claude Haiku for fast, descriptive naming
+- **Complete History** - All iterations, arguments, votes, and decisions
+- **Timestamped Files** - Format: `YYYYMMDD_HHMMSS_Title_Keywords.json`
+- **Incremental Saves** - State saved after each iteration for crash recovery
+
+**Saved Data Includes:**
+- Question and generated title
+- All personality arguments by iteration
+- Voting records and consensus tracking
+- Internal belief updates (when DEBUG_BELIEFS=true)
+- Judge's final decision
+- Configuration used for the debate
+
+**Control Saving:**
+```bash
+# Disable saving for quick tests
+uv run python debate_app.py --no-save
+
+# Or via environment variable
+export DEBATE_SAVE_ENABLED=false
+```
+
+**Example Saved File:**
+```json
+{
+  "title": "AI Development Speed Debate",
+  "question": "Should we develop AGI as fast as possible?",
+  "timestamp": "20250621_143052",
+  "iterations": [
+    {
+      "iteration": 0,
+      "arguments": { /* personality arguments */ },
+      "consensus_reached": false
+    },
+    // ... more iterations
+  ],
+  "final_consensus": true,
+  "final_judge_decision": "After careful consideration..."
+}
 ```
 
 ## 🛠️ Troubleshooting

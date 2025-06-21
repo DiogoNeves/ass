@@ -2,6 +2,8 @@
 
 import time
 import os
+import json
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from rich.console import Console
 from rich.panel import Panel
@@ -11,7 +13,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 from rich.columns import Columns
 
-from personality import PersonalityConfig, create_personality, LLMPersonality
+from personality import PersonalityConfig, create_personality, LLMPersonality, ClaudePersonality
 from voting import Vote, VotingConfig, VotingSystem
 from config import DebateConfig
 
@@ -175,6 +177,55 @@ Provide a clear, well-reasoned final judgment.""",
             "[bold yellow]What question would you like them to debate?[/bold yellow]"
         )
         return question
+    
+    def generate_debate_title(self, question: str) -> str:
+        """Generate a concise title for the debate using Haiku model."""
+        try:
+            # Create a Haiku model for title generation
+            title_generator = ClaudePersonality(
+                PersonalityConfig(
+                    name="Title Generator",
+                    model_provider="claude",
+                    model_name="claude-3-haiku-20240307",  # Using Haiku for fast title generation
+                    system_prompt="You are a title generator. Create concise, descriptive titles for debates. Respond with ONLY the title, no quotes or explanation.",
+                    traits={},
+                    voting_traits={},
+                    belief_persistence=5,
+                    reasoning_depth=5,
+                    truth_seeking=5
+                )
+            )
+            
+            prompt = f"Generate a short, descriptive title (max 6 words) for a debate about: {question}"
+            title = title_generator.generate_response(prompt, "").strip()
+            
+            # Fallback if title is too long or contains unwanted characters
+            if len(title) > 60 or '"' in title or "'" in title:
+                # Simple fallback title
+                words = question.split()[:5]
+                title = " ".join(words) + "..."
+            
+            return title
+        except Exception as e:
+            console.print(f"[dim]Could not generate title: {e}[/dim]")
+            # Fallback title
+            words = question.split()[:5]
+            return " ".join(words) + "..."
+    
+    def save_debate_state(self, debate_data: dict, filename: str):
+        """Save the current debate state to a JSON file."""
+        try:
+            # Create debates directory if it doesn't exist
+            os.makedirs("debates", exist_ok=True)
+            
+            filepath = os.path.join("debates", filename)
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(debate_data, f, indent=2, ensure_ascii=False)
+            
+            return filepath
+        except Exception as e:
+            console.print(f"[dim]Could not save debate: {e}[/dim]")
+            return None
 
     def format_current_round_context(self, round_arguments: Dict[str, str]) -> str:
         """Format the current round's arguments for context."""
@@ -325,6 +376,35 @@ Provide a clear, well-reasoned final judgment.""",
         consensus_reached = False
         final_votes = None
         
+        # Generate title and setup save file
+        debate_title = None
+        filename = None
+        debate_data = None
+        
+        if self.config.save_enabled:
+            console.print("[dim]Generating debate title...[/dim]")
+            debate_title = self.generate_debate_title(question)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_title = "".join(c for c in debate_title if c.isalnum() or c in " -_").strip()
+            filename = f"{timestamp}_{safe_title.replace(' ', '_')}.json"
+            console.print(f"[dim]Debate: {debate_title}[/dim]")
+            console.print(f"[dim]Saving to: debates/{filename}[/dim]\n")
+            
+            # Initialize debate data
+            debate_data = {
+                "title": debate_title,
+                "question": question,
+                "timestamp": timestamp,
+                "config": {
+                    "consensus_threshold": self.config.consensus_threshold,
+                    "max_iterations": self.config.max_iterations,
+                    "voting_start_iteration": self.config.voting_start_iteration
+                },
+                "iterations": [],
+                "final_consensus": None,
+                "final_judge_decision": None
+            }
+        
         debate_order = [
             "claude_positive",
             "openai_negative",
@@ -336,6 +416,7 @@ Provide a clear, well-reasoned final judgment.""",
             console.print(f"[bold white]═══ ITERATION {iteration} ═══[/bold white]\n")
             
             round_arguments = {}
+            votes = None
             
             for personality_key in debate_order:
                 personality = self.personalities[personality_key]
@@ -429,15 +510,50 @@ Provide a clear, well-reasoned final judgment.""",
                 if consensus_reached:
                     final_votes = votes
             
+            # Save iteration data
+            iteration_data = {
+                "iteration": iteration,
+                "arguments": round_arguments,
+                "votes": None,
+                "consensus_reached": consensus_reached
+            }
+            
+            # Add voting data if voting occurred
+            if iteration >= self.config.voting_start_iteration and votes:
+                iteration_data["votes"] = [
+                    {
+                        "voter": vote.voter_name,
+                        "rankings": vote.rankings,
+                        "reasoning": vote.reasoning
+                    }
+                    for vote in votes
+                ]
+                if self.voting_system and len(self.voting_system.vote_history) > 0:
+                    voting_round = len(self.voting_system.vote_history) - 1
+                    summary = self.voting_system.get_vote_summary(voting_round)
+                    iteration_data["voting_summary"] = summary
+            
+            if self.config.save_enabled and debate_data:
+                debate_data["iterations"].append(iteration_data)
+                debate_data["final_consensus"] = consensus_reached
+                
+                # Save current state
+                self.save_debate_state(debate_data, filename)
+            
             iteration += 1
             
-            # Brief pause between iterations for readability
+            # Continue to next iteration without pause
             if not consensus_reached and iteration < self.config.max_iterations:
-                console.print("\n[dim]Proceeding to next iteration...[/dim]")
-                time.sleep(1)  # Brief pause for readability
+                console.print("\n[dim]→ Iteration {}/{} starting...[/dim]\n".format(iteration + 1, self.config.max_iterations))
         
         # Judge's final decision
-        self._render_judge_decision_with_voting(question, debate_history, final_votes)
+        judge_decision = self._render_judge_decision_with_voting(question, debate_history, final_votes)
+        
+        # Save final state with judge decision
+        if self.config.save_enabled and debate_data:
+            debate_data["final_judge_decision"] = judge_decision
+            self.save_debate_state(debate_data, filename)
+            console.print(f"\n[dim]Debate saved to: debates/{filename}[/dim]")
 
     def _render_judge_decision(self, question: str, debate_context: str):
         """Render judge decision for classic mode."""
@@ -466,8 +582,8 @@ Provide a clear, well-reasoned final judgment.""",
             )
         )
 
-    def _render_judge_decision_with_voting(self, question: str, debate_history: List[Dict[str, str]], final_votes: Optional[List[Vote]]):
-        """Render judge decision with voting information."""
+    def _render_judge_decision_with_voting(self, question: str, debate_history: List[Dict[str, str]], final_votes: Optional[List[Vote]]) -> str:
+        """Render judge decision with voting information and return the decision text."""
         console.print("\n[bold white]═══ FINAL JUDGMENT ═══[/bold white]\n")
         
         # Prepare context for judge
@@ -520,6 +636,8 @@ Provide your final judgment. If you disagree with the consensus, explain why in 
                 padding=(1, 2),
             )
         )
+        
+        return final_decision
 
     def run_debate(self, question: str):
         """Run a debate based on configuration."""
@@ -552,6 +670,7 @@ def main():
     parser.add_argument("--min-iterations", type=int, help="Minimum iterations before voting")
     parser.add_argument("--local-model-url", help="URL for local model server")
     parser.add_argument("--config", help="Path to configuration file")
+    parser.add_argument("--no-save", action="store_true", help="Disable saving debates to files")
     
     args = parser.parse_args()
     
@@ -575,6 +694,8 @@ def main():
     if args.local_model_url:
         os.environ["LOCAL_MODEL_URL"] = args.local_model_url
         config.allow_local_models = True
+    if args.no_save:
+        config.save_enabled = False
     
     app = DebateApp(config)
     app.run()
