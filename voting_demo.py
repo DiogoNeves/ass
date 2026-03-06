@@ -125,8 +125,11 @@ def main():
     
     # Show trends
     console.print("\n[bold]Score Progression:[/bold]")
-    trends = voting_system.get_voting_trends()
-    for participant, scores in trends.items():
+    for participant in participants:
+        scores = [
+            voting_system.calculate_scores(iteration_votes).get(participant, 0)
+            for iteration_votes in voting_system.vote_history
+        ]
         trend = " → ".join(map(str, scores))
         console.print(f"{participant}: {trend}")
     

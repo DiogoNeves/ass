@@ -1,7 +1,6 @@
-import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -69,7 +68,7 @@ class VotingSystem:
         
         return consensus_reached, top_participant[0] if consensus_reached else None
     
-    def get_vote_summary(self, iteration: int) -> Dict[str, any]:
+    def get_vote_summary(self, iteration: int) -> Dict[str, Any]:
         """Get a summary of voting results for a specific iteration."""
         if iteration >= len(self.vote_history):
             return {}
@@ -98,48 +97,3 @@ class VotingSystem:
             ]
         }
     
-    def get_voting_trends(self) -> Dict[str, List[int]]:
-        """Track how scores changed over iterations."""
-        trends = defaultdict(list)
-        
-        for iteration_votes in self.vote_history:
-            scores = self.calculate_scores(iteration_votes)
-            for participant in self.participants:
-                trends[participant].append(scores.get(participant, 0))
-        
-        return dict(trends)
-    
-    def format_vote_table(self, votes: List[Vote]) -> str:
-        """Format votes as a readable table."""
-        lines = []
-        scores = self.calculate_scores(votes)
-        
-        lines.append("VOTING RESULTS")
-        lines.append("=" * 50)
-        
-        # Individual votes
-        for vote in votes:
-            lines.append(f"\n{vote.voter}'s Rankings:")
-            for rank, participant in enumerate(vote.rankings, 1):
-                points = self.config.scoring_system.get(rank, 0)
-                lines.append(f"  {rank}. {participant} ({points} points)")
-            if vote.reasoning:
-                lines.append(f"  Reasoning: {vote.reasoning}")
-        
-        # Total scores
-        lines.append("\nTOTAL SCORES:")
-        lines.append("-" * 30)
-        sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        for participant, score in sorted_scores:
-            percentage = (score / self.max_possible_points) * 100
-            lines.append(f"{participant}: {score} points ({percentage:.1f}% of max)")
-        
-        # Consensus status
-        consensus, winner = self.check_consensus(scores)
-        lines.append(f"\nConsensus threshold: {self.config.point_threshold * 100:.0f}% of max points")
-        if consensus:
-            lines.append(f"✓ CONSENSUS REACHED! Winner: {winner}")
-        else:
-            lines.append("✗ No consensus yet")
-        
-        return "\n".join(lines)

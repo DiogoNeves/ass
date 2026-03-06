@@ -94,7 +94,7 @@ This is your INTERNAL belief state - be completely honest about what you think i
             beliefs = json.loads(response.choices[0].message.content)
             self.internal_beliefs = beliefs
             self.current_question = question
-            self._save_belief_state(0)
+
             return beliefs
         except json.JSONDecodeError:
             # Fallback
@@ -150,7 +150,7 @@ Respond in JSON format:
             
             if result.get("should_update", False) and self._should_update_belief(result.get("evidence_strength", 0)):
                 self.internal_beliefs = result["updated_beliefs"]
-                self._save_belief_state(iteration)
+
                 return True
             return False
         except json.JSONDecodeError:

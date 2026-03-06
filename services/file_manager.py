@@ -7,10 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from anthropic import Anthropic
-from pydantic import ValidationError
 from rich.console import Console
-
-from models.debate import DebateState
 
 
 class FileManager:
@@ -134,14 +131,6 @@ Return only the title, nothing else."""
         filepath = self.save_directory / filename
         
         try:
-            # Validate with Pydantic if possible
-            if "question" in debate_data and "participants" in debate_data:
-                try:
-                    # This will validate the structure
-                    DebateState.model_validate(debate_data)
-                except ValidationError as e:
-                    self.console.print(f"[yellow]Warning: Debate data validation failed: {e}[/yellow]")
-            
             # Save to file
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(debate_data, f, indent=2, ensure_ascii=False)
@@ -174,12 +163,6 @@ Return only the title, nothing else."""
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            
-            # Try to validate with Pydantic
-            try:
-                DebateState.model_validate(data)
-            except ValidationError as e:
-                self.console.print(f"[yellow]Warning: Loaded debate has validation issues: {e}[/yellow]")
             
             return data
             

@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict
 
 from dotenv import load_dotenv
 
@@ -21,10 +21,6 @@ class DebateConfig:
     
     # Scoring system - rank position to points
     scoring_system: Dict[int, int] = field(default_factory=lambda: {1: 4, 2: 3, 3: 2, 4: 1})
-    
-    # Judge configuration
-    judge_can_override: bool = True
-    override_threshold: float = 0.9  # Judge needs 90% conviction to override
     
     # Model configuration
     allow_local_models: bool = True
@@ -82,8 +78,6 @@ class DebateConfig:
             "min_iterations": self.min_iterations,
             "max_iterations": self.max_iterations,
             "scoring_system": self.scoring_system,
-            "judge_can_override": self.judge_can_override,
-            "override_threshold": self.override_threshold,
             "allow_local_models": self.allow_local_models,
             "local_model_timeout": self.local_model_timeout,
             "classic_mode": self.classic_mode,
