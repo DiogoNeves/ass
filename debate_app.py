@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import os
 import time
 from datetime import datetime
@@ -12,11 +11,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt
 from rich.table import Table
 
-from config import DebateConfig  # Using old config for backward compatibility
+from config import DebateConfig
 from models.personality import PersonalityConfig
 from models.voting import Vote, VotingConfig
-from personalities.claude import ClaudePersonality
 from personality import LLMPersonality, create_personality
+from services.file_manager import FileManager
 from voting import VotingSystem
 
 console = Console()
@@ -28,7 +27,7 @@ class DebateApp:
         self.personalities = self._create_personalities()
         self.judge = self._create_judge()
         self.voting_system = None
-        self.demo_mode = False  # Flag for demo mode
+        self.file_manager = FileManager() if self.config.save_enabled else None
         if self.config.voting_enabled:
             voting_config = VotingConfig(
                 point_threshold=self.config.consensus_threshold,
@@ -58,7 +57,7 @@ you're not naive - you argue forcefully for why optimistic approaches are SUPERI
 In debates, you actively challenge negative viewpoints and push back against skepticism with evidence and reasoning.
 You're here to WIN the argument by convincing others, not just to share ideas.
 Keep responses concise but impactful (2-3 paragraphs max).""",
-                traits={"optimism": 9, "creativity": 8, "detail_focus": 3},
+
                 voting_traits={"fairness": 8, "self_confidence": 6},
                 belief_persistence=8,  # Resistant to changing beliefs
                 reasoning_depth=8,
@@ -79,7 +78,7 @@ Your skepticism is your weapon - you demolish weak arguments with precise, evide
 You're here to PROVE why cautious, critical analysis beats naive optimism every time. 
 Challenge every assumption, expose every weakness, and win through superior analytical rigor.
 Keep responses concise but devastating (2-3 paragraphs max).""",
-                traits={"pessimism": 8, "analytical": 9, "risk_focus": 9},
+
                 voting_traits={"fairness": 9, "self_confidence": 4},
                 belief_persistence=9,  # Extremely resistant to changing beliefs
                 reasoning_depth=9,
@@ -100,7 +99,7 @@ You're not just positive - you're DETERMINED to prove why forward-thinking appro
 In debates, you vigorously defend innovation against pessimistic thinking and fight for transformative ideas. 
 You're here to WIN by showing why vision and creativity triumph over fear and limitation.
 Keep responses concise but inspiring (2-3 paragraphs max).""",
-                traits={"optimism": 9, "creativity": 8, "detail_focus": 3},
+
                 voting_traits={"fairness": 7, "self_confidence": 7},
                 belief_persistence=7,  # Moderately resistant to changing beliefs
                 reasoning_depth=8,
@@ -121,7 +120,7 @@ Your mission is to WIN debates by demonstrating superior reasoning and exposing 
 You don't just point out problems - you ARGUE forcefully why your critical perspective is RIGHT. 
 Every weakness you find is ammunition in your quest to triumph through rigorous analysis.
 Keep responses concise but incisive (2-3 paragraphs max).""",
-                traits={"pessimism": 8, "analytical": 9, "risk_focus": 9},
+
                 voting_traits={"fairness": 8, "self_confidence": 5},
                 belief_persistence=8,  # Resistant to changing beliefs
                 reasoning_depth=9,
@@ -146,7 +145,7 @@ engaged with each other's points, and the final voting results if available.
 Your decision should synthesize the best ideas while acknowledging weaknesses.
 If you disagree with the consensus, you must provide detailed reasoning.
 Provide a clear, well-reasoned final judgment.""",
-                traits={"impartiality": 10, "synthesis": 9, "balance": 9},
+
                 voting_traits={"fairness": 10, "self_confidence": 8},
                 belief_persistence=4,  # Very open to best arguments
                 reasoning_depth=10,  # Maximum depth
@@ -180,55 +179,6 @@ Provide a clear, well-reasoned final judgment.""",
         )
         return question
     
-    def generate_debate_title(self, question: str) -> str:
-        """Generate a concise title for the debate using Haiku model."""
-        try:
-            # Create a Haiku model for title generation
-            title_generator = ClaudePersonality(
-                PersonalityConfig(
-                    name="Title Generator",
-                    model_provider="claude",
-                    model_name="claude-3-haiku-20240307",  # Using Haiku for fast title generation
-                    system_prompt="You are a title generator. Create concise, descriptive titles for debates. Respond with ONLY the title, no quotes or explanation.",
-                    traits={},
-                    voting_traits={},
-                    belief_persistence=5,
-                    reasoning_depth=5,
-                    truth_seeking=5
-                )
-            )
-            
-            prompt = f"Generate a short, descriptive title (max 6 words) for a debate about: {question}"
-            title = title_generator.generate_response(prompt, "").strip()
-            
-            # Fallback if title is too long or contains unwanted characters
-            if len(title) > 60 or '"' in title or "'" in title:
-                # Simple fallback title
-                words = question.split()[:5]
-                title = " ".join(words) + "..."
-            
-            return title
-        except Exception as e:
-            console.print(f"[dim]Could not generate title: {e}[/dim]")
-            # Fallback title
-            words = question.split()[:5]
-            return " ".join(words) + "..."
-    
-    def save_debate_state(self, debate_data: dict, filename: str):
-        """Save the current debate state to a JSON file."""
-        try:
-            # Create debates directory if it doesn't exist
-            os.makedirs("debates", exist_ok=True)
-            
-            filepath = os.path.join("debates", filename)
-            with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(debate_data, f, indent=2, ensure_ascii=False)
-            
-            return filepath
-        except Exception as e:
-            console.print(f"[dim]Could not save debate: {e}[/dim]")
-            return None
-
     def format_current_round_context(self, round_arguments: Dict[str, str]) -> str:
         """Format the current round's arguments for context."""
         context_parts = []
@@ -383,12 +333,12 @@ Provide a clear, well-reasoned final judgment.""",
         filename = None
         debate_data = None
         
-        if self.config.save_enabled:
+        if self.config.save_enabled and self.file_manager:
             console.print("[dim]Generating debate title...[/dim]")
-            debate_title = self.generate_debate_title(question)
+            debate_title = self.file_manager.generate_debate_title(question)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            safe_title = "".join(c for c in debate_title if c.isalnum() or c in " -_").strip()
-            filename = f"{timestamp}_{safe_title.replace(' ', '_')}.json"
+            safe_title = self.file_manager._sanitize_filename(debate_title)
+            filename = f"{timestamp}_{safe_title}.json"
             console.print(f"[dim]Debate: {debate_title}[/dim]")
             console.print(f"[dim]Saving to: debates/{filename}[/dim]\n")
             
@@ -535,12 +485,12 @@ Provide a clear, well-reasoned final judgment.""",
                     summary = self.voting_system.get_vote_summary(voting_round)
                     iteration_data["voting_summary"] = summary
             
-            if self.config.save_enabled and debate_data:
+            if self.config.save_enabled and debate_data and self.file_manager:
                 debate_data["iterations"].append(iteration_data)
                 debate_data["final_consensus"] = consensus_reached
-                
+
                 # Save current state
-                self.save_debate_state(debate_data, filename)
+                self.file_manager.save_debate(debate_data, custom_filename=filename.replace('.json', ''))
             
             iteration += 1
             
@@ -552,10 +502,9 @@ Provide a clear, well-reasoned final judgment.""",
         judge_decision = self._render_judge_decision_with_voting(question, debate_history, final_votes)
         
         # Save final state with judge decision
-        if self.config.save_enabled and debate_data:
+        if self.config.save_enabled and debate_data and self.file_manager:
             debate_data["final_judge_decision"] = judge_decision
-            self.save_debate_state(debate_data, filename)
-            console.print(f"\n[dim]Debate saved to: debates/{filename}[/dim]")
+            self.file_manager.save_debate(debate_data, custom_filename=filename.replace('.json', ''))
 
     def _render_judge_decision(self, question: str, debate_context: str):
         """Render judge decision for classic mode."""
