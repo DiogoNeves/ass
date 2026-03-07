@@ -44,8 +44,12 @@ class LLMPersonality(ABC):
     def _build_iteration_prompt(self, iteration: int, question: str, context: str) -> str:
         """Build prompt based on iteration number."""
         if iteration == 0:
-            return f"""Question: {question}
+            belief_context = ""
+            if self.internal_beliefs:
+                belief_context = f"\nYour internal assessment of this topic:\n{json.dumps(self.internal_beliefs, indent=2)}\n"
 
+            return f"""Question: {question}
+{belief_context}
 Based on your personality and expertise, provide your STRONGEST initial position on this question.
 
 Your goal is to WIN this debate by:
