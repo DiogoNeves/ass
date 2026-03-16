@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASS - Argumentative System Service</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --surface2: #0f3460;
+            --text: #e6e6e6;
+            --text-dim: #8888aa;
+            --accent: #e94560;
+            --green: #00c853;
+            --red: #ff5252;
+            --blue: #448aff;
+            --yellow: #ffd740;
+            --border: #2a2a4a;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .header {
+            text-align: center;
+            padding: 2rem 1rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 1.8rem; letter-spacing: 0.1em; }
+        .header p { color: var(--text-dim); margin-top: 0.3rem; }
+
+        .controls {
+            max-width: 800px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+        }
+        .input-row input:focus { border-color: var(--accent); }
+        .input-row button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .input-row button:hover { opacity: 0.9; }
+        .input-row button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .settings {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .settings label {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .settings input[type="checkbox"] { accent-color: var(--accent); }
+        .settings input[type="number"] {
+            width: 60px;
+            padding: 0.3rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+
+        .debate-area {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem 3rem;
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 0.75rem;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+        .status-bar.active { color: var(--accent); }
+        .spinner::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--text-dim);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Collapsible iteration sections */
+        .iteration-section {
+            border-top: 1px solid var(--border);
+            margin-top: 1rem;
+        }
+        .iteration-section > summary {
+            text-align: center;
+            padding: 1rem 0 0.75rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text);
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+        }
+        .iteration-section > summary::-webkit-details-marker { display: none; }
+        .iteration-section > summary::before {
+            content: '\25B6';
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+            vertical-align: middle;
+        }
+        .iteration-section[open] > summary::before {
+            transform: rotate(90deg);
+        }
+        .iteration-section > summary:hover { color: var(--accent); }
+
+        /* Collapsible response cards */
+        .response-collapse {
+            margin: 0.75rem 0;
+            animation: fadeIn 0.3s ease;
+        }
+        .response-collapse > summary {
+            list-style: none;
+            cursor: pointer;
+            border-left: 4px solid;
+            background: var(--surface);
+            border-radius: 0 8px 8px 0;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+        .response-collapse > summary::-webkit-details-marker { display: none; }
+        .response-collapse > summary .arrow {
+            font-size: 0.65rem;
+            transition: transform 0.2s;
+            color: var(--text-dim);
+        }
+        .response-collapse[open] > summary .arrow {
+            transform: rotate(90deg);
+        }
+        .response-collapse > summary:hover { opacity: 0.9; }
+
+        .response-collapse.green > summary { border-left-color: var(--green); }
+        .response-collapse.red > summary { border-left-color: var(--red); }
+        .response-collapse.blue > summary { border-left-color: var(--blue); }
+        .response-collapse.yellow > summary { border-left-color: var(--yellow); }
+
+        .response-collapse .name { font-weight: 700; }
+        .response-collapse.green .name { color: var(--green); }
+        .response-collapse.red .name { color: var(--red); }
+        .response-collapse.blue .name { color: var(--blue); }
+        .response-collapse.yellow .name { color: var(--yellow); }
+
+        .response-collapse .preview {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 0;
+        }
+        .response-collapse[open] .preview { display: none; }
+
+        .response-body {
+            border-left: 4px solid var(--border);
+            background: var(--surface);
+            border-radius: 0 0 8px 0;
+            padding: 0.75rem 1.25rem 1rem;
+            margin-top: -1px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .response-collapse.green .response-body { border-left-color: var(--green); }
+        .response-collapse.red .response-body { border-left-color: var(--red); }
+        .response-collapse.blue .response-body { border-left-color: var(--blue); }
+        .response-collapse.yellow .response-body { border-left-color: var(--yellow); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+        .vote-section {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+        }
+        .vote-section h3 {
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+        .vote-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        .vote-table th, .vote-table td {
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .vote-table th { color: var(--text-dim); font-size: 0.85rem; }
+
+        .individual-votes { font-size: 0.9rem; }
+        .individual-votes .voter { font-weight: 600; margin-top: 0.5rem; }
+        .individual-votes .rankings { color: var(--text-dim); margin-left: 1rem; }
+        .individual-votes .reasoning {
+            color: var(--text-dim);
+            font-style: italic;
+            margin-left: 1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .consensus-banner {
+            text-align: center;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+        .consensus-banner.reached {
+            background: rgba(0, 200, 83, 0.15);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+        .consensus-banner.not-reached {
+            color: var(--yellow);
+        }
+
+        .judge-card {
+            background: var(--surface2);
+            border: 2px solid var(--text-dim);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+        .judge-card .name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+        .judge-card .text {
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ASS</h1>
+        <p>Argumentative System Service</p>
+    </div>
+
+    <div class="controls">
+        <div class="input-row">
+            <input type="text" id="question" placeholder="What question would you like them to debate?"
+                   autofocus>
+            <button id="startBtn" onclick="startDebate()">Start Debate</button>
+        </div>
+        <div class="settings">
+            <label>
+                <input type="checkbox" id="classicMode"> Classic Mode (3 rounds, no voting)
+            </label>
+            <label>
+                Max iterations:
+                <input type="number" id="maxIterations" value="10" min="1" max="50">
+            </label>
+            <label>
+                Threshold:
+                <input type="number" id="threshold" value="0.75" min="0" max="1" step="0.05">
+            </label>
+        </div>
+    </div>
+
+    <div class="debate-area" id="debateArea">
+        <div class="status-bar" id="statusBar"></div>
+    </div>
+
+    <script>
+        const debateArea = document.getElementById('debateArea');
+        let statusBar = document.getElementById('statusBar');
+        const startBtn = document.getElementById('startBtn');
+        const questionInput = document.getElementById('question');
+
+        // Track current iteration container for appending responses
+        let currentIterationEl = null;
+        let responseCount = 0;
+
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !startBtn.disabled) startDebate();
+        });
+
+        function setStatus(msg, active = true) {
+            statusBar.textContent = msg;
+            statusBar.className = 'status-bar' + (active ? ' active spinner' : '');
+        }
+
+        function clearStatus() {
+            statusBar.textContent = '';
+            statusBar.className = 'status-bar';
+        }
+
+        function addElement(html) {
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            debateArea.insertBefore(div.firstElementChild, statusBar);
+            statusBar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+
+        function addToIteration(html) {
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            if (currentIterationEl) {
+                if (!currentIterationEl.hasAttribute('open')) {
+                    currentIterationEl.setAttribute('open', '');
+                }
+                currentIterationEl.appendChild(div.firstElementChild);
+            } else {
+                debateArea.insertBefore(div.firstElementChild, statusBar);
+            }
+            statusBar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+
+        function truncate(text, len) {
+            if (!text || text.length <= len) return text || '';
+            return text.substring(0, len) + '...';
+        }
+
+        async function startDebate() {
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            // Clear previous debate and re-acquire statusBar reference
+            debateArea.innerHTML = '<div class="status-bar" id="statusBar"></div>';
+            statusBar = document.getElementById('statusBar');
+            currentIterationEl = null;
+            responseCount = 0;
+
+            startBtn.disabled = true;
+            setStatus('Starting debate...');
+
+            const params = new URLSearchParams({
+                question,
+                classic_mode: document.getElementById('classicMode').checked,
+                max_iterations: document.getElementById('maxIterations').value,
+                consensus_threshold: document.getElementById('threshold').value,
+            });
+
+            try {
+                const res = await fetch('/api/debate/start?' + params);
+                const { debate_id } = await res.json();
+
+                const evtSource = new EventSource('/api/debate/' + debate_id + '/stream');
+                evtSource.onmessage = (e) => {
+                    const event = JSON.parse(e.data);
+                    handleEvent(event, evtSource);
+                };
+                evtSource.onerror = () => {
+                    evtSource.close();
+                    setStatus('Connection lost.', false);
+                    startBtn.disabled = false;
+                };
+            } catch (err) {
+                setStatus('Failed to start debate: ' + err.message, false);
+                startBtn.disabled = false;
+            }
+        }
+
+        function handleEvent(event, evtSource) {
+            switch (event.type) {
+                case 'debate_start':
+                    addElement(`<div style="text-align:center;padding:1rem 0;font-weight:700;font-size:1.2rem;">Debate: ${escapeHtml(event.question)}</div>`);
+                    break;
+
+                case 'iteration_start': {
+                    // Collapse previous iteration if it exists
+                    if (currentIterationEl && currentIterationEl.hasAttribute('open')) {
+                        currentIterationEl.removeAttribute('open');
+                    }
+                    // Create new collapsible iteration
+                    const details = document.createElement('details');
+                    details.className = 'iteration-section';
+                    details.setAttribute('open', '');
+                    details.innerHTML = `<summary>${escapeHtml(event.label)}</summary>`;
+                    debateArea.insertBefore(details, statusBar);
+                    currentIterationEl = details;
+                    responseCount = 0;
+                    break;
+                }
+
+                case 'belief_forming':
+                    setStatus(`${event.personality} is forming internal beliefs...`);
+                    break;
+
+                case 'belief_updating':
+                    setStatus(`${event.personality} is evaluating arguments...`);
+                    break;
+
+                case 'thinking':
+                    setStatus(`${event.personality} is ${event.action || 'thinking'}...`);
+                    break;
+
+                case 'response': {
+                    clearStatus();
+                    responseCount++;
+                    const preview = truncate(event.text, 80);
+                    addToIteration(`
+                        <details class="response-collapse ${event.style}" open>
+                            <summary>
+                                <span class="arrow">\u25B6</span>
+                                <span class="name">${escapeHtml(event.personality)}</span>
+                                <span class="preview">${escapeHtml(preview)}</span>
+                            </summary>
+                            <div class="response-body">${escapeHtml(event.text)}</div>
+                        </details>
+                    `);
+                    break;
+                }
+
+                case 'voting_start':
+                    addToIteration(`<div style="text-align:center;padding:0.75rem 0;font-weight:700;color:var(--text-dim);">Voting Phase</div>`);
+                    break;
+
+                case 'voting_personality':
+                    setStatus(`${event.personality} is voting...`);
+                    break;
+
+                case 'vote_results':
+                    clearStatus();
+                    renderVoteResults(event);
+                    break;
+
+                case 'consensus':
+                    addElement(`<div class="consensus-banner reached">Consensus Reached! Winner: ${escapeHtml(event.winner)}</div>`);
+                    break;
+
+                case 'next_iteration':
+                    setStatus(`Starting iteration ${event.next_iteration + 1}/${event.max_iterations}...`);
+                    break;
+
+                case 'judge_thinking':
+                    setStatus('The Judge is reviewing the entire debate...');
+                    break;
+
+                case 'judge_decision':
+                    clearStatus();
+                    addElement(`
+                        <div class="judge-card">
+                            <div class="name">Final Decision</div>
+                            <div class="text">${escapeHtml(event.text)}</div>
+                        </div>
+                    `);
+                    break;
+
+                case 'error':
+                    clearStatus();
+                    addElement(`<div class="consensus-banner" style="color:var(--red);border:1px solid var(--red)">Error: ${escapeHtml(event.message)}</div>`);
+                    break;
+
+                case 'done':
+                    evtSource.close();
+                    setStatus('Debate complete.', false);
+                    startBtn.disabled = false;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        function renderVoteResults(event) {
+            const summary = event.summary || {};
+            const maxPts = event.max_possible_points || 16;
+            const rankings = summary.sorted_rankings || [];
+            const individual = summary.individual_votes || [];
+
+            let tableRows = rankings.map(([name, score]) => {
+                const pct = ((score / maxPts) * 100).toFixed(1);
+                return `<tr><td>${escapeHtml(name)}</td><td>${score}</td><td>${pct}%</td></tr>`;
+            }).join('');
+
+            let individualHtml = individual.map(v => `
+                <div class="voter">${escapeHtml(v.voter)}</div>
+                <div class="rankings">${v.rankings.map(escapeHtml).join(' \u2192 ')}</div>
+                ${v.reasoning ? `<div class="reasoning">${escapeHtml(v.reasoning)}</div>` : ''}
+            `).join('');
+
+            let consensusHtml = '';
+            if (!event.consensus_reached) {
+                const needed = summary.threshold_score || 0;
+                consensusHtml = `<div class="consensus-banner not-reached">No consensus yet. Need ${Math.round(needed)} points (${(event.threshold * 100).toFixed(0)}% of max)</div>`;
+            }
+
+            addToIteration(`
+                <div class="vote-section">
+                    <h3>Voting Results - Iteration ${event.iteration + 1}</h3>
+                    <table class="vote-table">
+                        <thead><tr><th>Participant</th><th>Score</th><th>Percentage</th></tr></thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    <div class="individual-votes">${individualHtml}</div>
+                    ${consensusHtml}
+                </div>
+            `);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

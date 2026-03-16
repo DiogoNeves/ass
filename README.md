@@ -5,6 +5,7 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![UV](https://img.shields.io/badge/uv-package%20manager-green.svg)](https://docs.astral.sh/uv/)
 [![Rich](https://img.shields.io/badge/cli-rich-purple.svg)](https://rich.readthedocs.io/)
+[![FastAPI](https://img.shields.io/badge/web-fastapi-teal.svg)](https://fastapi.tiangolo.com/)
 
 *A sophisticated debate system for reaching better answers through AI argumentation*
 
@@ -121,7 +122,13 @@ Each AI personality maintains private beliefs about what's actually true, separa
 
 ### Running Debates
 
-**Interactive Mode** - Ask any question:
+**Web Interface** - Browser-based with real-time streaming:
+```bash
+uv run python web_server.py
+# Then open http://localhost:8000
+```
+
+**Interactive CLI** - Terminal interface with Rich formatting:
 ```bash
 uv run python debate_app.py
 ```
@@ -243,6 +250,7 @@ new_personality = create_personality(PersonalityConfig(
 - **✅ Pydantic Validation** - Runtime validation of all data structures with clear error messages
 - **🔧 Highly Configurable** - JSON configs, environment variables, CLI flags
 - **📈 Belief Tracking** - Monitor how positions evolve through debate
+- **🌐 Web Interface** - Browser-based UI with real-time SSE streaming
 - **🎭 Rich CLI Interface** - Beautiful formatting with progress indicators
 - **💾 Automatic Debate Saving** - Preserves complete debate history with AI-generated titles
 - **🏗️ Modular Architecture** - Clear separation between models, services, UI, and personalities
@@ -363,9 +371,14 @@ Create a JSON configuration file (see `sample_config.json`):
 ```
 ass/
 ├── 📄 README.md           # This file
-├── ⚙️ pyproject.toml      # UV project configuration (includes Pydantic)
+├── ⚙️ pyproject.toml      # UV project configuration
 ├── 🔒 uv.lock            # Dependency lock file
 ├── 🔐 .env               # API keys (create this)
+├── 🎭 debate_app.py       # CLI interactive application entry point
+├── 🧠 debate_engine.py    # Shared debate logic (generator-based, UI-agnostic)
+├── 🌐 web_server.py       # FastAPI web server with SSE streaming
+├── 📁 static/            # Web frontend assets
+│   └── index.html        # Single-page debate UI
 ├── 📁 models/            # Pydantic data models with validation
 │   ├── __init__.py
 │   ├── personality.py    # PersonalityConfig, PersonalityTraits
@@ -389,8 +402,7 @@ ass/
 │   └── prompts.py       # User input handling
 ├── 🧠 personality.py     # Backward compatibility imports
 ├── 🗳️ voting.py         # Voting system implementation
-├── ⚙️ config.py         # Legacy configuration (use models/debate.py)
-├── 🎭 debate_app.py      # Main interactive application
+├── ⚙️ config.py         # Debate configuration
 ├── 🎬 demo.py           # Demo runner with sample debates
 ├── 📋 sample_config.json # Example configuration file
 ├── 📄 VOTING-FEATURE.md  # Voting feature requirements
@@ -408,7 +420,7 @@ We welcome contributions! Here are some ideas:
 - **🗳️ Alternative Voting Systems** - Approval voting, Condorcet method, etc.
 - **🎨 UI Improvements** - Better visualizations, vote graphs, debate trees
 - **📊 Analytics** - Argument quality metrics, consensus patterns, debate statistics
-- **🌐 Web Interface** - Browser-based version with real-time updates
+- **✅ Web Interface** - Already implemented! FastAPI + SSE with dark-themed frontend
 - **💾 Enhanced Debate History** - Advanced analysis and replay features
 - **🔍 Argument Mining** - Extract key points and conclusions automatically
 

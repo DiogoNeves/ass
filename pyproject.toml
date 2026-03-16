@@ -11,6 +11,8 @@ dependencies = [
     "rich>=14.0.0",
     "requests>=2.31.0",
     "pydantic>=2.11.6",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
 ]
 
 [dependency-groups]

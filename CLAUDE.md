@@ -11,7 +11,10 @@ ASS (Argumentative System Service) is a Python CLI application that simulates AI
 - **License**: MIT
 
 ## Key Files to Know
-- `debate_app.py` - Main interactive application entry point
+- `debate_app.py` - CLI interactive application entry point (Rich terminal UI)
+- `debate_engine.py` - Shared debate orchestration engine (generator-based, UI-agnostic)
+- `web_server.py` - FastAPI web server with SSE streaming
+- `static/index.html` - Web frontend (HTML/CSS/JS)
 - `models/` - Pydantic models with validation (PersonalityConfig, Vote, DebateConfig, etc.)
 - `personalities/` - AI personality implementations (base class, Claude, OpenAI, local)
 - `services/` - Business logic (DebateManager, FileManager)
@@ -27,8 +30,12 @@ Please commit between phases.
 # Install/update dependencies
 uv sync
 
-# Run interactive debate
+# Run interactive debate (CLI)
 uv run python debate_app.py
+
+# Run web interface
+uv run python web_server.py
+# Then open http://localhost:8000
 
 # Run demo
 uv run python demo.py
