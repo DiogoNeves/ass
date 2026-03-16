@@ -11,6 +11,8 @@
 
 </div>
 
+<img width="1478" height="1177" alt="CleanShot 2026-03-16 at 08 11 38" src="https://github.com/user-attachments/assets/b5dc09b9-2f31-4708-b495-9ec5e1d78e35" />
+
 ## 🎭 What is ASS?
 
 **ASS (Argumentative System Service)** is an advanced debate simulation platform that models how expert-level AI personalities argue, reason, and potentially change their minds when presented with compelling evidence. Using internal belief states and sophisticated reasoning systems, ASS helps explore complex topics from multiple perspectives to arrive at more nuanced, well-considered conclusions.
