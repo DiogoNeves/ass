@@ -259,7 +259,7 @@
 
     <script>
         const debateArea = document.getElementById('debateArea');
-        const statusBar = document.getElementById('statusBar');
+        let statusBar = document.getElementById('statusBar');
         const startBtn = document.getElementById('startBtn');
         const questionInput = document.getElementById('question');
 
@@ -288,8 +288,9 @@
             const question = questionInput.value.trim();
             if (!question) return;
 
-            // Clear previous debate
+            // Clear previous debate and re-acquire statusBar reference
             debateArea.innerHTML = '<div class="status-bar" id="statusBar"></div>';
+            statusBar = document.getElementById('statusBar');
 
             startBtn.disabled = true;
             setStatus('Starting debate...');
