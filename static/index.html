@@ -123,41 +123,100 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .iteration-header {
+        /* Collapsible iteration sections */
+        .iteration-section {
+            border-top: 1px solid var(--border);
+            margin-top: 1rem;
+        }
+        .iteration-section > summary {
             text-align: center;
-            margin: 1.5rem 0 1rem;
+            padding: 1rem 0 0.75rem;
             font-weight: 700;
             font-size: 1.1rem;
             color: var(--text);
-            border-top: 1px solid var(--border);
-            padding-top: 1rem;
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
         }
+        .iteration-section > summary::-webkit-details-marker { display: none; }
+        .iteration-section > summary::before {
+            content: '\25B6';
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+            vertical-align: middle;
+        }
+        .iteration-section[open] > summary::before {
+            transform: rotate(90deg);
+        }
+        .iteration-section > summary:hover { color: var(--accent); }
 
-        .response-card {
-            border-left: 4px solid;
-            background: var(--surface);
-            border-radius: 0 8px 8px 0;
-            padding: 1rem 1.25rem;
+        /* Collapsible response cards */
+        .response-collapse {
             margin: 0.75rem 0;
             animation: fadeIn 0.3s ease;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
-        .response-card.green { border-left-color: var(--green); }
-        .response-card.red { border-left-color: var(--red); }
-        .response-card.blue { border-left-color: var(--blue); }
-        .response-card.yellow { border-left-color: var(--yellow); }
-        .response-card .name {
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+        .response-collapse > summary {
+            list-style: none;
+            cursor: pointer;
+            border-left: 4px solid;
+            background: var(--surface);
+            border-radius: 0 8px 8px 0;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
         }
-        .response-card.green .name { color: var(--green); }
-        .response-card.red .name { color: var(--red); }
-        .response-card.blue .name { color: var(--blue); }
-        .response-card.yellow .name { color: var(--yellow); }
-        .response-card .text {
+        .response-collapse > summary::-webkit-details-marker { display: none; }
+        .response-collapse > summary .arrow {
+            font-size: 0.65rem;
+            transition: transform 0.2s;
+            color: var(--text-dim);
+        }
+        .response-collapse[open] > summary .arrow {
+            transform: rotate(90deg);
+        }
+        .response-collapse > summary:hover { opacity: 0.9; }
+
+        .response-collapse.green > summary { border-left-color: var(--green); }
+        .response-collapse.red > summary { border-left-color: var(--red); }
+        .response-collapse.blue > summary { border-left-color: var(--blue); }
+        .response-collapse.yellow > summary { border-left-color: var(--yellow); }
+
+        .response-collapse .name { font-weight: 700; }
+        .response-collapse.green .name { color: var(--green); }
+        .response-collapse.red .name { color: var(--red); }
+        .response-collapse.blue .name { color: var(--blue); }
+        .response-collapse.yellow .name { color: var(--yellow); }
+
+        .response-collapse .preview {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 0;
+        }
+        .response-collapse[open] .preview { display: none; }
+
+        .response-body {
+            border-left: 4px solid var(--border);
+            background: var(--surface);
+            border-radius: 0 0 8px 0;
+            padding: 0.75rem 1.25rem 1rem;
+            margin-top: -1px;
             line-height: 1.6;
             white-space: pre-wrap;
         }
+        .response-collapse.green .response-body { border-left-color: var(--green); }
+        .response-collapse.red .response-body { border-left-color: var(--red); }
+        .response-collapse.blue .response-body { border-left-color: var(--blue); }
+        .response-collapse.yellow .response-body { border-left-color: var(--yellow); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
 
         .vote-section {
             background: var(--surface);
@@ -263,6 +322,10 @@
         const startBtn = document.getElementById('startBtn');
         const questionInput = document.getElementById('question');
 
+        // Track current iteration container for appending responses
+        let currentIterationEl = null;
+        let responseCount = 0;
+
         questionInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !startBtn.disabled) startDebate();
         });
@@ -284,6 +347,25 @@
             statusBar.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
 
+        function addToIteration(html) {
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            if (currentIterationEl) {
+                if (!currentIterationEl.hasAttribute('open')) {
+                    currentIterationEl.setAttribute('open', '');
+                }
+                currentIterationEl.appendChild(div.firstElementChild);
+            } else {
+                debateArea.insertBefore(div.firstElementChild, statusBar);
+            }
+            statusBar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+
+        function truncate(text, len) {
+            if (!text || text.length <= len) return text || '';
+            return text.substring(0, len) + '...';
+        }
+
         async function startDebate() {
             const question = questionInput.value.trim();
             if (!question) return;
@@ -291,6 +373,8 @@
             // Clear previous debate and re-acquire statusBar reference
             debateArea.innerHTML = '<div class="status-bar" id="statusBar"></div>';
             statusBar = document.getElementById('statusBar');
+            currentIterationEl = null;
+            responseCount = 0;
 
             startBtn.disabled = true;
             setStatus('Starting debate...');
@@ -325,12 +409,24 @@
         function handleEvent(event, evtSource) {
             switch (event.type) {
                 case 'debate_start':
-                    addElement(`<div class="iteration-header">Debate: ${escapeHtml(event.question)}</div>`);
+                    addElement(`<div style="text-align:center;padding:1rem 0;font-weight:700;font-size:1.2rem;">Debate: ${escapeHtml(event.question)}</div>`);
                     break;
 
-                case 'iteration_start':
-                    addElement(`<div class="iteration-header">${escapeHtml(event.label)}</div>`);
+                case 'iteration_start': {
+                    // Collapse previous iteration if it exists
+                    if (currentIterationEl && currentIterationEl.hasAttribute('open')) {
+                        currentIterationEl.removeAttribute('open');
+                    }
+                    // Create new collapsible iteration
+                    const details = document.createElement('details');
+                    details.className = 'iteration-section';
+                    details.setAttribute('open', '');
+                    details.innerHTML = `<summary>${escapeHtml(event.label)}</summary>`;
+                    debateArea.insertBefore(details, statusBar);
+                    currentIterationEl = details;
+                    responseCount = 0;
                     break;
+                }
 
                 case 'belief_forming':
                     setStatus(`${event.personality} is forming internal beliefs...`);
@@ -344,18 +440,25 @@
                     setStatus(`${event.personality} is ${event.action || 'thinking'}...`);
                     break;
 
-                case 'response':
+                case 'response': {
                     clearStatus();
-                    addElement(`
-                        <div class="response-card ${event.style}">
-                            <div class="name">${escapeHtml(event.personality)}</div>
-                            <div class="text">${escapeHtml(event.text)}</div>
-                        </div>
+                    responseCount++;
+                    const preview = truncate(event.text, 80);
+                    addToIteration(`
+                        <details class="response-collapse ${event.style}" open>
+                            <summary>
+                                <span class="arrow">\u25B6</span>
+                                <span class="name">${escapeHtml(event.personality)}</span>
+                                <span class="preview">${escapeHtml(preview)}</span>
+                            </summary>
+                            <div class="response-body">${escapeHtml(event.text)}</div>
+                        </details>
                     `);
                     break;
+                }
 
                 case 'voting_start':
-                    addElement(`<div class="iteration-header">Voting Phase</div>`);
+                    addToIteration(`<div style="text-align:center;padding:0.75rem 0;font-weight:700;color:var(--text-dim);">Voting Phase</div>`);
                     break;
 
                 case 'voting_personality':
@@ -401,7 +504,6 @@
                     break;
 
                 default:
-                    // Silently ignore unknown events (belief_formed, belief_updated, etc.)
                     break;
             }
         }
@@ -419,7 +521,7 @@
 
             let individualHtml = individual.map(v => `
                 <div class="voter">${escapeHtml(v.voter)}</div>
-                <div class="rankings">${v.rankings.map(escapeHtml).join(' → ')}</div>
+                <div class="rankings">${v.rankings.map(escapeHtml).join(' \u2192 ')}</div>
                 ${v.reasoning ? `<div class="reasoning">${escapeHtml(v.reasoning)}</div>` : ''}
             `).join('');
 
@@ -429,7 +531,7 @@
                 consensusHtml = `<div class="consensus-banner not-reached">No consensus yet. Need ${Math.round(needed)} points (${(event.threshold * 100).toFixed(0)}% of max)</div>`;
             }
 
-            addElement(`
+            addToIteration(`
                 <div class="vote-section">
                     <h3>Voting Results - Iteration ${event.iteration + 1}</h3>
                     <table class="vote-table">
