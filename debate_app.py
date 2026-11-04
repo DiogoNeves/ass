@@ -70,6 +70,7 @@ class DebateApp:
             console.print(f"[bold white]\u2550\u2550\u2550 {event['label']} \u2550\u2550\u2550[/bold white]\n")
 
         elif event_type == EVENT_BELIEF_FORMING:
+            self._stop_spinner()
             self._start_spinner = Progress(
                 SpinnerColumn(),
                 TextColumn(f"[bold]{event['personality']} is forming internal beliefs..."),
@@ -79,13 +80,13 @@ class DebateApp:
             self._start_spinner.add_task("beliefs", total=None)
 
         elif event_type == EVENT_BELIEF_FORMED:
-            if hasattr(self, '_start_spinner'):
-                self._start_spinner.stop()
+            self._stop_spinner()
             if os.getenv("DEBUG_BELIEFS", "").lower() == "true":
                 beliefs = event.get("beliefs", {})
                 console.print(f"[dim]Internal beliefs: {beliefs.get('core_position', 'N/A')}[/dim]")
 
         elif event_type == EVENT_BELIEF_UPDATING:
+            self._stop_spinner()
             self._start_spinner = Progress(
                 SpinnerColumn(),
                 TextColumn(f"[bold]{event['personality']} is evaluating arguments..."),
@@ -95,13 +96,13 @@ class DebateApp:
             self._start_spinner.add_task("evaluating", total=None)
 
         elif event_type == EVENT_BELIEF_UPDATED:
-            if hasattr(self, '_start_spinner'):
-                self._start_spinner.stop()
+            self._stop_spinner()
             if event.get("changed") and os.getenv("DEBUG_BELIEFS", "").lower() == "true":
                 console.print(f"[yellow]{event['personality']} updated their beliefs![/yellow]")
 
         elif event_type == EVENT_THINKING:
             action = event.get("action", "thinking")
+            self._stop_spinner()
             self._start_spinner = Progress(
                 SpinnerColumn(),
                 TextColumn(f"[bold]{event['personality']} is {action}..."),
@@ -112,8 +113,7 @@ class DebateApp:
             time.sleep(1)
 
         elif event_type == EVENT_RESPONSE:
-            if hasattr(self, '_start_spinner'):
-                self._start_spinner.stop()
+            self._stop_spinner()
             console.print(Panel(
                 event["text"],
                 title=f"\U0001f4ad {event['personality']}",
@@ -126,6 +126,7 @@ class DebateApp:
             console.print("\n[bold white]\u2550\u2550\u2550 VOTING PHASE \u2550\u2550\u2550[/bold white]\n")
 
         elif event_type == EVENT_VOTING_PERSONALITY:
+            self._stop_spinner()
             self._start_spinner = Progress(
                 SpinnerColumn(),
                 TextColumn(f"[bold]{event['personality']} is evaluating arguments..."),
@@ -135,8 +136,7 @@ class DebateApp:
             self._start_spinner.add_task("voting", total=None)
 
         elif event_type == EVENT_VOTE_RESULTS:
-            if hasattr(self, '_start_spinner'):
-                self._start_spinner.stop()
+            self._stop_spinner()
             self._display_vote_results(event)
 
         elif event_type == EVENT_CONSENSUS:
@@ -148,6 +148,7 @@ class DebateApp:
             )
 
         elif event_type == EVENT_JUDGE_THINKING:
+            self._stop_spinner()
             self._start_spinner = Progress(
                 SpinnerColumn(),
                 TextColumn("[bold]The Judge is reviewing the entire debate..."),
@@ -158,8 +159,7 @@ class DebateApp:
             time.sleep(2)
 
         elif event_type == EVENT_JUDGE_DECISION:
-            if hasattr(self, '_start_spinner'):
-                self._start_spinner.stop()
+            self._stop_spinner()
             console.print("\n[bold white]\u2550\u2550\u2550 FINAL JUDGMENT \u2550\u2550\u2550[/bold white]\n")
             console.print(Panel(
                 event["text"],
@@ -212,6 +212,13 @@ class DebateApp:
             console.print(
                 f"\n[yellow]No consensus yet. Need {needed:.0f} points ({threshold * 100:.0f}% of max)[/yellow]"
             )
+
+    def _stop_spinner(self):
+        """Stop the active spinner, if any, so only one Live display runs at a time."""
+        spinner = getattr(self, "_start_spinner", None)
+        if spinner is not None:
+            spinner.stop()
+            self._start_spinner = None
 
     def run_debate(self, question: str):
         """Run a debate by consuming events from the engine."""

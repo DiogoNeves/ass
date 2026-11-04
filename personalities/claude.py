@@ -11,6 +11,19 @@ from models.personality import PersonalityConfig
 from .base import LLMPersonality
 
 
+def _parse_json(text: str) -> Any:
+    """Parse a JSON object from a model reply, tolerating ```json fences or surrounding prose."""
+    text = (text or "").strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end > start:
+        return json.loads(text[start:end + 1])
+    raise json.JSONDecodeError("No JSON object found", text, 0)
+
+
 class ClaudePersonality(LLMPersonality):
     """Claude-based personality implementation."""
     
@@ -47,7 +60,7 @@ class ClaudePersonality(LLMPersonality):
         )
         
         try:
-            return json.loads(response.content[0].text)
+            return _parse_json(response.content[0].text)
         except json.JSONDecodeError:
             # Fallback if JSON parsing fails
             return {
@@ -83,7 +96,7 @@ This is your INTERNAL belief state - be completely honest about what you think i
         )
         
         try:
-            beliefs = json.loads(response.content[0].text)
+            beliefs = _parse_json(response.content[0].text)
             self.internal_beliefs = beliefs
             self.current_question = question
 
@@ -135,7 +148,7 @@ Respond in JSON format:
         )
         
         try:
-            result = json.loads(response.content[0].text)
+            result = _parse_json(response.content[0].text)
             
             if result.get("should_update", False) and self._should_update_belief(result.get("evidence_strength", 0)):
                 self.internal_beliefs = result["updated_beliefs"]
