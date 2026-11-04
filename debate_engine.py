@@ -163,6 +163,27 @@ Provide a clear, well-reasoned final judgment.""",
         )
 
     @staticmethod
+    def _normalize_rankings(raw_rankings: Any, participant_names: List[str]) -> List[str]:
+        """Map a model's rankings onto the real participant names.
+
+        Drops unknown names and duplicates, matches names case-insensitively
+        (e.g. "Claude Optimist (me)"), and appends any missing participants
+        in their default order so the Vote model always validates.
+        """
+        rankings: List[str] = []
+        if isinstance(raw_rankings, list):
+            for entry in raw_rankings:
+                entry_text = str(entry).strip().lower()
+                match = next(
+                    (name for name in participant_names if name.lower() in entry_text),
+                    None,
+                )
+                if match and match not in rankings:
+                    rankings.append(match)
+        rankings += [name for name in participant_names if name not in rankings]
+        return rankings
+
+    @staticmethod
     def format_current_round_context(round_arguments: Dict[str, str]) -> str:
         context_parts = []
         for name, argument in round_arguments.items():
@@ -319,8 +340,8 @@ Provide a clear, well-reasoned final judgment.""",
                     vote_data = personality.generate_vote(participant_names, debate_context)
                     vote = Vote(
                         voter=personality.config.name,
-                        rankings=vote_data.get("rankings", participant_names),
-                        reasoning=vote_data.get("reasoning", ""),
+                        rankings=self._normalize_rankings(vote_data.get("rankings"), participant_names),
+                        reasoning=str(vote_data.get("reasoning") or "").strip() or "(no reasoning given)",
                         iteration=iteration,
                     )
                     votes.append(vote)
